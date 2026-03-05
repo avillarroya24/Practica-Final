@@ -50,12 +50,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../../../shared/code;../../../libraries/sdl3/include;../../../libraries/glad/include;../../../libraries/glm/include;../../../libraries/soil2/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../shared/code;../../libraries/sdl3/include;../../libraries/glad/include;../../libraries/glm/include;../../libraries/soil2/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../libraries/sdl3/lib/x64;../../../libraries/glad/lib/x64;../../../libraries/soil2/lib/x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../libraries/sdl3/lib/x64;../../libraries/glad/lib/x64;../../libraries/soil2/lib/x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>sdl3-static-debug.lib;glad-static-debug.lib;soil2-static-debug.lib;imm32.lib;setupapi.lib;version.lib;winmm.lib;opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -67,7 +68,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../../../shared/code;../../../libraries/sdl3/include;../../../libraries/glad/include;../../../libraries/glm/include;../../../libraries/soil2/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../shared/code;../../libraries/sdl3/include;../../libraries/glad/include;../../libraries/glm/include;../../libraries/soil2/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -75,7 +77,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>sdl3-static-release.lib;glad-static-release.lib;soil2-static-release.lib;imm32.lib;setupapi.lib;version.lib;winmm.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../../libraries/sdl3/lib/x64;../../../libraries/glad/lib/x64;../../../libraries/soil2/lib/x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../libraries/sdl3/lib/x64;../../libraries/glad/lib/x64;../../libraries/soil2/lib/x64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -87,11 +89,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\shared\code\Color.hpp" />
-    <ClInclude Include="..\..\..\shared\code\Color_Buffer.hpp" />
-    <ClInclude Include="..\..\..\shared\code\Window.hpp" />
     <ClInclude Include="..\..\code\Scene.hpp" />
     <ClInclude Include="..\..\code\Skybox.hpp" />
     <ClInclude Include="..\..\code\Texture_Cube.hpp" />
+    <ClInclude Include="..\..\code\Window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
