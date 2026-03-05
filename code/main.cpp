@@ -1,89 +1,80 @@
 #include "Scene.hpp"
 #include <Window.hpp>
-#include <SDL3/SDL_main.h>
+#include <SDL3/SDL.h>  // SDL3 correcta
+
 
 using udit::Scene;
 using udit::Window;
 
-/*
-    Aqui es el main donde se añade lo del raton que vaya de derecha a izquierda o que se pueda mirar de arriba a abajo en caso de que sea necesario
-
-*/
-
-int main (int , char * [])
+int main(int, char* [])
 {
-    constexpr unsigned viewport_width  = 1024;
-    constexpr unsigned viewport_height =  576;
+    constexpr unsigned viewport_width = 1024;
+    constexpr unsigned viewport_height = 576;
 
-    Window window("OpenGL example", viewport_width, viewport_height, { 3, 3 });    
-    Scene  scene (viewport_width, viewport_height);
+    Window window("OpenGL example", viewport_width, viewport_height, { 3, 3 });
+    Scene scene(viewport_width, viewport_height);
 
-    bool  exit        = false;
-    float mouse_x     = 0;
-    float mouse_y     = 0;
-    bool  button_down = false;
+    bool exit_app = false;
+    int mouse_x = 0;
+    int mouse_y = 0;
+    bool button_down = false;
 
-    do
+    // Bucle principal
+    while (!exit_app)
     {
-        // Se procesan los eventos acumulados:
-
         SDL_Event event;
-
-        while (SDL_PollEvent (&event))
+        while (SDL_PollEvent(&event))
         {
             switch (event.type)
             {
-                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            {
+                if (event.button.button == SDL_BUTTON_LEFT && !button_down)
                 {
-                    auto   buttons = SDL_GetMouseState (&mouse_x, &mouse_y);
-                    auto left_down = buttons &  SDL_BUTTON_MASK(SDL_BUTTON_LEFT);
-
-                    if (left_down && not button_down) scene.on_click (mouse_x, mouse_y, button_down = true);
-
-                    break;
+                    mouse_x = event.button.x;
+                    mouse_y = event.button.y;
+                    scene.on_click(static_cast<float>(mouse_x), static_cast<float>(mouse_y), button_down = true);
                 }
+                break;
+            }
 
-                case SDL_EVENT_MOUSE_BUTTON_UP:
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+            {
+                if (event.button.button == SDL_BUTTON_LEFT && button_down)
                 {
-                    auto   buttons = SDL_GetMouseState (&mouse_x, &mouse_y);
-                    auto left_down = buttons & SDL_BUTTON_MASK(SDL_BUTTON_LEFT);
-
-                    if (not left_down && button_down) scene.on_click (mouse_x, mouse_y, button_down = false);
-
-                    break;
+                    mouse_x = event.button.x;
+                    mouse_y = event.button.y;
+                    scene.on_click(static_cast<float>(mouse_x), static_cast<float>(mouse_y), button_down = false);
                 }
+                break;
+            }
 
-                case SDL_EVENT_MOUSE_MOTION:
-                {
-                    SDL_GetMouseState (&mouse_x, &mouse_y);
+            case SDL_EVENT_MOUSE_MOTION:
+            {
+                mouse_x = event.motion.x;
+                mouse_y = event.motion.y;
+                scene.on_drag(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
+                break;
+            }
 
-                    scene.on_drag (mouse_x, mouse_y);
-
-                    break;
-                }
-
-                case SDL_EVENT_QUIT:
-                {
-                    exit = true;
-                }
+            case SDL_EVENT_QUIT:
+            {
+                exit_app = true;
+                break;
+            }
             }
         }
 
-        // Se actualiza la escena:
+        // Actualizar la escena
+        scene.update();
 
-        scene.update ();
+        // Renderizar la escena
+        scene.render();
 
-        // Se redibuja la escena:
-
-        scene.render ();
-
-        // Se actualiza el contenido de la ventana:
-
-        window.swap_buffers ();
+        // Intercambiar buffers
+        window.swap_buffers();
     }
-    while (not exit);
 
-    SDL_Quit ();
-
+    SDL_Quit();
     return 0;
 }

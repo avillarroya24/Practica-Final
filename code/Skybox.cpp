@@ -2,6 +2,8 @@
 #include <iostream>
 #include <glad/gl.h>
 #include "Skybox.hpp"
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
 
 /*
     La clase akybox es donde se añade el cielo como fondo

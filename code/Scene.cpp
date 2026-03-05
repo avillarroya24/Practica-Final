@@ -9,8 +9,11 @@
 
 using namespace udit;
 
+const float M_PI = 3.14159265359f;
+
 Scene::Scene(int width, int height)
 {
+
 
     this->width = width;
     this->height = height;
@@ -30,7 +33,7 @@ Scene::Scene(int width, int height)
 
     for (int i = 0; i < stacks; i++)
     {
-        float lat0 = M_PI * (-0.5 + (float)i / stacks);
+        float lat0 = M_PI * (-0.5f + (float)i / stacks);
         float lat1 = M_PI * (-0.5 + (float)(i + 1) / stacks);
 
         float z0 = sin(lat0);
