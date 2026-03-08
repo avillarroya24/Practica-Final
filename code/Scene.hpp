@@ -1,16 +1,13 @@
 #pragma once
 
 #include <glad/gl.h>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 namespace udit
 {
-
     class Scene
     {
-
     private:
-
         int width;
         int height;
 
@@ -24,14 +21,10 @@ namespace udit
         int vertexCount;
 
     public:
-
         Scene(int width, int height);
 
         void update();
-
         void render();
-
         void resize(int new_width, int new_height);
     };
-
 }

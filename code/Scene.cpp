@@ -3,9 +3,9 @@
 #include <vector>
 #include <cmath>
 
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace udit;
 
@@ -13,8 +13,6 @@ const float M_PI = 3.14159265359f;
 
 Scene::Scene(int width, int height)
 {
-
-
     this->width = width;
     this->height = height;
 
@@ -23,7 +21,6 @@ Scene::Scene(int width, int height)
     smallRotation = 0.0f;
 
     glEnable(GL_DEPTH_TEST);
-
     resize(width, height);
 
     std::vector<float> vertices;
@@ -34,7 +31,7 @@ Scene::Scene(int width, int height)
     for (int i = 0; i < stacks; i++)
     {
         float lat0 = M_PI * (-0.5f + (float)i / stacks);
-        float lat1 = M_PI * (-0.5 + (float)(i + 1) / stacks);
+        float lat1 = M_PI * (-0.5f + (float)(i + 1) / stacks);
 
         float z0 = sin(lat0);
         float zr0 = cos(lat0);
@@ -53,29 +50,15 @@ Scene::Scene(int width, int height)
             float x1 = cos(lng1);
             float y1 = sin(lng1);
 
-            vertices.push_back(x0 * zr0);
-            vertices.push_back(z0);
-            vertices.push_back(y0 * zr0);
+            // Triángulo 1
+            vertices.insert(vertices.end(), { x0 * zr0, z0, y0 * zr0 });
+            vertices.insert(vertices.end(), { x0 * zr1, z1, y0 * zr1 });
+            vertices.insert(vertices.end(), { x1 * zr1, z1, y1 * zr1 });
 
-            vertices.push_back(x0 * zr1);
-            vertices.push_back(z1);
-            vertices.push_back(y0 * zr1);
-
-            vertices.push_back(x1 * zr1);
-            vertices.push_back(z1);
-            vertices.push_back(y1 * zr1);
-
-            vertices.push_back(x0 * zr0);
-            vertices.push_back(z0);
-            vertices.push_back(y0 * zr0);
-
-            vertices.push_back(x1 * zr1);
-            vertices.push_back(z1);
-            vertices.push_back(y1 * zr1);
-
-            vertices.push_back(x1 * zr0);
-            vertices.push_back(z0);
-            vertices.push_back(y1 * zr0);
+            // Triángulo 2
+            vertices.insert(vertices.end(), { x0 * zr0, z0, y0 * zr0 });
+            vertices.insert(vertices.end(), { x1 * zr1, z1, y1 * zr1 });
+            vertices.insert(vertices.end(), { x1 * zr0, z0, y1 * zr0 });
         }
     }
 
@@ -105,7 +88,6 @@ void Scene::update()
 
 void Scene::render()
 {
-
     glClearColor(0.2f, 0.3f, 0.5f, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -119,30 +101,28 @@ void Scene::render()
 
     glBindVertexArray(vao);
 
-    // ESFERA GRANDE
-
+    // -------------------------
+    // ESFERA GRANDE (SOL)
+    // -------------------------
     glm::mat4 model = glm::mat4(1);
-
     model = glm::rotate(model, bigRotation, glm::vec3(0, 1, 0));
-    model = glm::scale(model, glm::vec3(1.5));
+    model = glm::scale(model, glm::vec3(1.5f));
 
     glm::mat4 mvp = proj * view * model;
-
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
 
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 
-    // ESFERA PEQUEÑA
-
+    // -------------------------
+    // ESFERA PEQUEÑA (PLANETA)
+    // -------------------------
     glm::mat4 small = glm::mat4(1);
-
     small = glm::rotate(small, smallOrbit, glm::vec3(0, 1, 0));
     small = glm::translate(small, glm::vec3(3, 0, 0));
     small = glm::rotate(small, smallRotation, glm::vec3(0, 1, 0));
-    small = glm::scale(small, glm::vec3(0.5));
+    small = glm::scale(small, glm::vec3(0.5f));
 
     glm::mat4 mvp2 = proj * view * small;
-
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp2));
 
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
@@ -150,9 +130,7 @@ void Scene::render()
 
 void Scene::resize(int new_width, int new_height)
 {
-
     width = new_width;
     height = new_height;
-
     glViewport(0, 0, width, height);
 }

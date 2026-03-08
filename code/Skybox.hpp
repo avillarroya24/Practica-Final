@@ -1,53 +1,41 @@
-
-// Este código es de dominio público
-// angel.rodriguez@udit.es
-
 #ifndef SKYBOX_HEADER
 #define SKYBOX_HEADER
 
-    #include <vector>
-    #include <memory>
-    #include "Camera.hpp"
-    #include "Texture_Cube.hpp"
+#include <vector>
+#include <memory>
+#include "Camera.hpp"
+#include "Texture_Cube.hpp"
 
-    namespace udit
+namespace udit
+{
+    class Skybox
     {
+    private:
+        static const GLfloat coordinates[];
+        static const std::string vertex_shader_code;
+        static const std::string fragment_shader_code;
 
-        class Skybox
-        {
-        private:
+        GLuint vbo_id;
+        GLuint vao_id;
 
-            static const GLfloat              coordinates[];
-            static const std::string   vertex_shader_code;
-            static const std::string fragment_shader_code;
+        GLuint shader_program_id;
 
-            GLuint       vbo_id;                                // Id del VBO de las coordenadas
-            GLuint       vao_id;                                // Id del VAO del cubo
+        GLint model_view_matrix_id;
+        GLint projection_matrix_id;
 
-            GLuint       shader_program_id;
+        Texture_Cube texture_cube;
 
-            GLint        model_view_matrix_id;
-            GLint        projection_matrix_id;
+    public:
+        Skybox(const std::string& texture_path);
+        ~Skybox();
 
-            Texture_Cube texture_cube;
+        void render(const Camera& camera);
 
-        public:
-
-            Skybox(const std::string & texture_path);
-           ~Skybox();
-
-        public:
-
-            void render (const Camera & camera);
-
-        private:
-
-            GLuint compile_shaders        ();
-            void   show_compilation_error (GLuint  shader_id);
-            void   show_linkage_error     (GLuint program_id);
-
-        };
-
-    }
+    private:
+        GLuint compile_shaders();
+        void show_compilation_error(GLuint shader_id);
+        void show_linkage_error(GLuint program_id);
+    };
+}
 
 #endif

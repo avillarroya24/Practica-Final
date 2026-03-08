@@ -1,80 +1,39 @@
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
+
 #include "Scene.hpp"
-#include <Window.hpp>
-#include <SDL3/SDL.h>  // SDL3 correcta
+#include "Skybox.hpp"
+#include "Camera.hpp"
 
+using namespace udit;
 
-using udit::Scene;
-using udit::Window;
-
-int main(int, char* [])
+int main()
 {
-    constexpr unsigned viewport_width = 1024;
-    constexpr unsigned viewport_height = 576;
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    Window window("OpenGL example", viewport_width, viewport_height, { 3, 3 });
-    Scene scene(viewport_width, viewport_height);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "Sistema Solar", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
 
-    bool exit_app = false;
-    int mouse_x = 0;
-    int mouse_y = 0;
-    bool button_down = false;
+    gladLoadGL(glfwGetProcAddress);
 
-    // Bucle principal
-    while (!exit_app)
+    Scene scene(1280, 720);
+    Camera camera;
+    Skybox skybox("assets/skybox/");
+
+    while (!glfwWindowShouldClose(window))
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            {
-                if (event.button.button == SDL_BUTTON_LEFT && !button_down)
-                {
-                    mouse_x = event.button.x;
-                    mouse_y = event.button.y;
-                    scene.on_click(static_cast<float>(mouse_x), static_cast<float>(mouse_y), button_down = true);
-                }
-                break;
-            }
-
-            case SDL_EVENT_MOUSE_BUTTON_UP:
-            {
-                if (event.button.button == SDL_BUTTON_LEFT && button_down)
-                {
-                    mouse_x = event.button.x;
-                    mouse_y = event.button.y;
-                    scene.on_click(static_cast<float>(mouse_x), static_cast<float>(mouse_y), button_down = false);
-                }
-                break;
-            }
-
-            case SDL_EVENT_MOUSE_MOTION:
-            {
-                mouse_x = event.motion.x;
-                mouse_y = event.motion.y;
-                scene.on_drag(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
-                break;
-            }
-
-            case SDL_EVENT_QUIT:
-            {
-                exit_app = true;
-                break;
-            }
-            }
-        }
-
-        // Actualizar la escena
         scene.update();
 
-        // Renderizar la escena
+        skybox.render(camera);
         scene.render();
 
-        // Intercambiar buffers
-        window.swap_buffers();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
-    SDL_Quit();
+    glfwTerminate();
     return 0;
 }
