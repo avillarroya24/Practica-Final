@@ -3,134 +3,161 @@
 #include <vector>
 #include <cmath>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 
-using namespace udit;
+using namespace glm;
 
-const float M_PI = 3.14159265359f;
-
-Scene::Scene(int width, int height)
+namespace udit
 {
-    this->width = width;
-    this->height = height;
 
-    bigRotation = 0.0f;
-    smallOrbit = 0.0f;
-    smallRotation = 0.0f;
+    static const char* vertex_shader = R"(
 
-    glEnable(GL_DEPTH_TEST);
-    resize(width, height);
+#version 330 core
 
-    std::vector<float> vertices;
+layout (location = 0) in vec3 position;
 
-    int stacks = 20;
-    int slices = 20;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-    for (int i = 0; i < stacks; i++)
+void main()
+{
+    gl_Position = projection * view * model * vec4(position,1.0);
+}
+
+)";
+
+    static const char* fragment_shader = R"(
+
+#version 330 core
+
+out vec4 color;
+
+void main()
+{
+    color = vec4(1.0,1.0,1.0,1.0);
+}
+
+)";
+
+    Scene::Scene(int width, int height)
     {
-        float lat0 = M_PI * (-0.5f + (float)i / stacks);
-        float lat1 = M_PI * (-0.5f + (float)(i + 1) / stacks);
+        shader_program = compile_shaders();
 
-        float z0 = sin(lat0);
-        float zr0 = cos(lat0);
+        model_id = glGetUniformLocation(shader_program, "model");
+        view_id = glGetUniformLocation(shader_program, "view");
+        projection_id = glGetUniformLocation(shader_program, "projection");
 
-        float z1 = sin(lat1);
-        float zr1 = cos(lat1);
+        generate_sphere();
 
-        for (int j = 0; j < slices; j++)
-        {
-            float lng0 = 2 * M_PI * (float)(j) / slices;
-            float lng1 = 2 * M_PI * (float)(j + 1) / slices;
+        // Matrices fijas (sin cámara)
+        mat4 view = lookAt(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
+        mat4 projection = perspective(radians(45.0f), float(width) / float(height), 0.1f, 100.0f);
 
-            float x0 = cos(lng0);
-            float y0 = sin(lng0);
-
-            float x1 = cos(lng1);
-            float y1 = sin(lng1);
-
-            // Triángulo 1
-            vertices.insert(vertices.end(), { x0 * zr0, z0, y0 * zr0 });
-            vertices.insert(vertices.end(), { x0 * zr1, z1, y0 * zr1 });
-            vertices.insert(vertices.end(), { x1 * zr1, z1, y1 * zr1 });
-
-            // Triángulo 2
-            vertices.insert(vertices.end(), { x0 * zr0, z0, y0 * zr0 });
-            vertices.insert(vertices.end(), { x1 * zr1, z1, y1 * zr1 });
-            vertices.insert(vertices.end(), { x1 * zr0, z0, y1 * zr0 });
-        }
+        glUseProgram(shader_program);
+        glUniformMatrix4fv(view_id, 1, GL_FALSE, value_ptr(view));
+        glUniformMatrix4fv(projection_id, 1, GL_FALSE, value_ptr(projection));
+        glUseProgram(0);
     }
 
-    vertexCount = vertices.size() / 3;
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    void Scene::generate_sphere()
+    {
+        std::vector<float> vertices;
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        const int stacks = 20;
+        const int slices = 20;
 
-    glBufferData(GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(float),
-        vertices.data(),
-        GL_STATIC_DRAW);
+        for (int i = 0; i < stacks; i++)
+        {
+            float lat0 = glm::pi<float>() * (-0.5f + float(i) / stacks);
+            float lat1 = glm::pi<float>() * (-0.5f + float(i + 1) / stacks);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-}
+            float y0 = sin(lat0), y1 = sin(lat1);
+            float r0 = cos(lat0), r1 = cos(lat1);
 
-void Scene::update()
-{
-    bigRotation += 0.01f;
-    smallOrbit += 0.02f;
-    smallRotation += 0.05f;
-}
+            for (int j = 0; j < slices; j++)
+            {
+                float lng0 = 2.0f * glm::pi<float>() * float(j) / slices;
+                float lng1 = 2.0f * glm::pi<float>() * float(j + 1) / slices;
 
-void Scene::render()
-{
-    glClearColor(0.2f, 0.3f, 0.5f, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                float x0 = cos(lng0), z0 = sin(lng0);
+                float x1 = cos(lng1), z1 = sin(lng1);
 
-    glm::mat4 proj = glm::perspective(glm::radians(60.0f), (float)width / height, 0.1f, 100.0f);
+                vertices.push_back(x0 * r0); vertices.push_back(y0); vertices.push_back(z0 * r0);
+                vertices.push_back(x0 * r1); vertices.push_back(y1); vertices.push_back(z0 * r1);
+                vertices.push_back(x1 * r1); vertices.push_back(y1); vertices.push_back(z1 * r1);
 
-    glm::mat4 view = glm::lookAt(
-        glm::vec3(0, 3, 8),
-        glm::vec3(0, 0, 0),
-        glm::vec3(0, 1, 0)
-    );
+                vertices.push_back(x0 * r0); vertices.push_back(y0); vertices.push_back(z0 * r0);
+                vertices.push_back(x1 * r1); vertices.push_back(y1); vertices.push_back(z1 * r1);
+                vertices.push_back(x1 * r0); vertices.push_back(y0); vertices.push_back(z1 * r0);
+            }
+        }
 
-    glBindVertexArray(vao);
+        vertex_count = vertices.size() / 3;
 
-    // -------------------------
-    // ESFERA GRANDE (SOL)
-    // -------------------------
-    glm::mat4 model = glm::mat4(1);
-    model = glm::rotate(model, bigRotation, glm::vec3(0, 1, 0));
-    model = glm::scale(model, glm::vec3(1.5f));
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
 
-    glm::mat4 mvp = proj * view * model;
-    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
 
-    // -------------------------
-    // ESFERA PEQUEÑA (PLANETA)
-    // -------------------------
-    glm::mat4 small = glm::mat4(1);
-    small = glm::rotate(small, smallOrbit, glm::vec3(0, 1, 0));
-    small = glm::translate(small, glm::vec3(3, 0, 0));
-    small = glm::rotate(small, smallRotation, glm::vec3(0, 1, 0));
-    small = glm::scale(small, glm::vec3(0.5f));
+        glBindVertexArray(0);
+    }
 
-    glm::mat4 mvp2 = proj * view * small;
-    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp2));
+    void Scene::update()
+    {
+        earth_rotation += 0.01f;
+        moon_rotation += 0.02f;
+        moon_orbit += 0.005f;
+    }
 
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-}
+    void Scene::render()
+    {
+        glUseProgram(shader_program);
+        glBindVertexArray(vao);
 
-void Scene::resize(int new_width, int new_height)
-{
-    width = new_width;
-    height = new_height;
-    glViewport(0, 0, width, height);
+        // Tierra
+        mat4 model = rotate(mat4(1.0f), earth_rotation, vec3(0, 1, 0));
+        glUniformMatrix4fv(model_id, 1, GL_FALSE, value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+
+        // Luna
+        model = rotate(mat4(1.0f), moon_orbit, vec3(0, 1, 0));
+        model = translate(model, vec3(3, 0, 0));
+        model = rotate(model, moon_rotation, vec3(0, 1, 0));
+        model = scale(model, vec3(0.3f));
+        glUniformMatrix4fv(model_id, 1, GL_FALSE, value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+
+        glBindVertexArray(0);
+    }
+
+    GLuint Scene::compile_shaders()
+    {
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+
+        glShaderSource(vs, 1, &vertex_shader, NULL);
+        glShaderSource(fs, 1, &fragment_shader, NULL);
+
+        glCompileShader(vs);
+        glCompileShader(fs);
+
+        GLuint program = glCreateProgram();
+        glAttachShader(program, vs);
+        glAttachShader(program, fs);
+        glLinkProgram(program);
+
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        return program;
+    }
+
 }

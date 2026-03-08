@@ -4,10 +4,7 @@
 #include "Skybox.hpp"
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
-
-/*
-    La clase akybox es donde se añade el cielo como fondo
-*/
+#include <gtc/type_ptr.hpp>
 
 namespace udit
 {
@@ -56,214 +53,142 @@ namespace udit
     };
 
     const std::string Skybox::vertex_shader_code =
-
         "#version 330\n"
-        ""
         "uniform mat4 model_view_matrix;"
         "uniform mat4 projection_matrix;"
-        ""
         "layout (location = 0) in vec3 vertex_coordinates;"
-        ""
         "out vec3 texture_coordinates;"
-        ""
-        "void main()"
-        "{"
-        "   texture_coordinates = vec3(vertex_coordinates.x, -vertex_coordinates.y, vertex_coordinates.z);"
-        "   gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
+        "void main() {"
+        " texture_coordinates = vertex_coordinates;"
+        " gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
         "}";
 
     const std::string Skybox::fragment_shader_code =
-
         "#version 330\n"
-        ""
-        "in  vec3 texture_coordinates;"
+        "in vec3 texture_coordinates;"
         "out vec4 fragment_color;"
-        ""
         "uniform samplerCube sampler;"
-        ""
-        "void main()"
-        "{"
-        "    fragment_color = texture (sampler, texture_coordinates);"
+        "void main() {"
+        " fragment_color = texture(sampler, texture_coordinates);"
         "}";
 
-    Skybox::Skybox(const std::string & texture_base_path)
-    :
-        texture_cube(texture_base_path)
+    Skybox::Skybox(const std::string& texture_base_path)
+        : texture_cube(texture_base_path)
     {
-        assert(texture_cube.is_ok ());
+        assert(texture_cube.is_ok());
 
-        // Se compilan y linkan los shaders:
+        shader_program_id = compile_shaders();
 
-        shader_program_id = compile_shaders ();
+        model_view_matrix_id = glGetUniformLocation(shader_program_id, "model_view_matrix");
+        projection_matrix_id = glGetUniformLocation(shader_program_id, "projection_matrix");
 
-        model_view_matrix_id = glGetUniformLocation (shader_program_id, "model_view_matrix");
-        projection_matrix_id = glGetUniformLocation (shader_program_id, "projection_matrix");
+        glGenBuffers(1, &vbo_id);
+        glGenVertexArrays(1, &vao_id);
 
-        // Se generan índices para los VBOs del cubo:
+        glBindVertexArray(vao_id);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(coordinates), coordinates, GL_STATIC_DRAW);
 
-        glGenBuffers (1, &vbo_id);
-        glGenVertexArrays (1, &vao_id);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glBindVertexArray(0);
 
-        // Se activa el VAO del cubo para configurarlo:
+        // Matrices fijas para el skybox
+        mat4 view = mat4(1.0f); // identidad, sin traslación
+        mat4 projection = perspective(radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
 
-        glBindVertexArray (vao_id);
-
-        // Se suben a un VBO los datos de coordenadas y se vinculan al VAO:
-
-        glBindBuffer (GL_ARRAY_BUFFER, vbo_id);
-        glBufferData (GL_ARRAY_BUFFER, sizeof(coordinates), coordinates, GL_STATIC_DRAW);
-
-        glEnableVertexAttribArray (0);
-        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-        glBindVertexArray (0);
+        glUseProgram(shader_program_id);
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, value_ptr(view));
+        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, value_ptr(projection));
+        glUseProgram(0);
     }
 
     Skybox::~Skybox()
     {
-        // Se libera el VBO y el VAO usados:
-
-        glDeleteVertexArrays (1, &vao_id);
-        glDeleteBuffers      (1, &vbo_id);
+        glDeleteVertexArrays(1, &vao_id);
+        glDeleteBuffers(1, &vbo_id);
     }
 
-    void Skybox::render(const Camera& camera)
+    void Skybox::render()
     {
         glUseProgram(shader_program_id);
 
-        // Aseguramos que el cubemap esté en la unidad 0
         glActiveTexture(GL_TEXTURE0);
         texture_cube.bind();
-        // Forzamos que el sampler del shader use la unidad 0
+
         GLint loc_sampler = glGetUniformLocation(shader_program_id, "sampler");
         if (loc_sampler >= 0) glUniform1i(loc_sampler, 0);
 
-        // Obtenemos la vista y la proyección desde la cámara
-        const glm::mat4 view = camera.get_transform_matrix_inverse();
-        const glm::mat4& projection_matrix = camera.get_projection_matrix();
-
-        // Eliminamos la traslación de la vista para que el skybox parezca infinito
-        glm::mat4 view_no_translation = glm::mat4(glm::mat3(view));
-
-        // En tu shader el uniform se llama model_view_matrix; le pasamos la vista sin traslación
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(view_no_translation));
-        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-
-        // Dibujamos el skybox sin escribir en el depth buffer y permitiendo que se dibuje en el fondo
         GLint prevDepthFunc;
         glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
 
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
 
-        // Si el VAO está configurado, dibujamos el cubo
         glBindVertexArray(vao_id);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
-        // Restauramos estado de profundidad
         glDepthMask(GL_TRUE);
         glDepthFunc(prevDepthFunc);
 
         glUseProgram(0);
     }
 
-
-    GLuint Skybox::compile_shaders ()
+    GLuint Skybox::compile_shaders()
     {
         GLint succeeded = GL_FALSE;
 
-        // Se crean objetos para los shaders:
+        GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+        GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
 
-        GLuint   vertex_shader_id = glCreateShader (GL_VERTEX_SHADER  );
-        GLuint fragment_shader_id = glCreateShader (GL_FRAGMENT_SHADER);
+        const char* vertex_shaders_code[] = { vertex_shader_code.c_str() };
+        const char* fragment_shaders_code[] = { fragment_shader_code.c_str() };
+        const GLint vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
+        const GLint fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
 
-        // Se carga el código de los shaders:
+        glShaderSource(vertex_shader_id, 1, vertex_shaders_code, vertex_shaders_size);
+        glShaderSource(fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
 
-        const char *   vertex_shaders_code[] = {          vertex_shader_code.c_str () };
-        const char * fragment_shaders_code[] = {        fragment_shader_code.c_str () };
-        const GLint    vertex_shaders_size[] = { (GLint)  vertex_shader_code.size  () };
-        const GLint  fragment_shaders_size[] = { (GLint)fragment_shader_code.size  () };
+        glCompileShader(vertex_shader_id);
+        glCompileShader(fragment_shader_id);
 
-        glShaderSource  (  vertex_shader_id, 1,   vertex_shaders_code,   vertex_shaders_size);
-        glShaderSource  (fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
+        glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
+        if (!succeeded) show_compilation_error(vertex_shader_id);
 
-        // Se compilan los shaders:
+        glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
+        if (!succeeded) show_compilation_error(fragment_shader_id);
 
-        glCompileShader (  vertex_shader_id);
-        glCompileShader (fragment_shader_id);
+        GLuint program_id = glCreateProgram();
+        glAttachShader(program_id, vertex_shader_id);
+        glAttachShader(program_id, fragment_shader_id);
+        glLinkProgram(program_id);
 
-        // Se comprueba que si la compilación ha tenido éxito:
-
-        glGetShaderiv   (  vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error (  vertex_shader_id);
-
-        glGetShaderiv   (fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error (fragment_shader_id);
-
-        // Se crea un objeto para un programa:
-
-        GLuint program_id = glCreateProgram ();
-
-        // Se cargan los shaders compilados en el programa:
-
-        glAttachShader  (program_id,   vertex_shader_id);
-        glAttachShader  (program_id, fragment_shader_id);
-
-        // Se linkan los shaders:
-
-        glLinkProgram   (program_id);
-
-        // Se comprueba si el linkage ha tenido éxito:
-
-        glGetProgramiv  (program_id, GL_LINK_STATUS, &succeeded);
-        if (!succeeded) show_linkage_error (program_id);
-
-        // Se liberan los shaders compilados una vez se han linkado:
-
-        glDeleteShader (  vertex_shader_id);
-        glDeleteShader (fragment_shader_id);
+        glDeleteShader(vertex_shader_id);
+        glDeleteShader(fragment_shader_id);
 
         return program_id;
     }
 
-    void Skybox::show_compilation_error (GLuint shader_id)
+    void Skybox::show_compilation_error(GLuint shader_id)
     {
         string info_log;
-        GLint  info_log_length;
-
-        glGetShaderiv (shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-
-        info_log.resize (info_log_length);
-
-        glGetShaderInfoLog (shader_id, info_log_length, NULL, &info_log.front ());
-
-        cerr << info_log.c_str () << endl;
-
-        #ifdef _MSC_VER
-            //OutputDebugStringA (info_log.c_str ());
-        #endif
-
+        GLint info_log_length;
+        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+        info_log.resize(info_log_length);
+        glGetShaderInfoLog(shader_id, info_log_length, NULL, &info_log[0]);
+        cerr << info_log << endl;
         assert(false);
     }
 
-    void Skybox::show_linkage_error (GLuint program_id)
+    void Skybox::show_linkage_error(GLuint program_id)
     {
         string info_log;
-        GLint  info_log_length;
-
-        glGetProgramiv (program_id, GL_INFO_LOG_LENGTH, &info_log_length);
-
-        info_log.resize (info_log_length);
-
-        glGetProgramInfoLog (program_id, info_log_length, NULL, &info_log.front ());
-
-        cerr << info_log.c_str () << endl;
-
-        #ifdef _MSC_VER
-            //OutputDebugStringA (info_log.c_str ());
-        #endif
-
+        GLint info_log_length;
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
+        info_log.resize(info_log_length);
+        glGetProgramInfoLog(program_id, info_log_length, NULL, &info_log[0]);
+        cerr << info_log << endl;
         assert(false);
     }
 

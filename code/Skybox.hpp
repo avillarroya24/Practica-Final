@@ -29,7 +29,7 @@ namespace udit
         Skybox(const std::string& texture_path);
         ~Skybox();
 
-        void render(const Camera& camera);
+        void render();
 
     private:
         GLuint compile_shaders();

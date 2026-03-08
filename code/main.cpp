@@ -1,39 +1,48 @@
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
 #include "Scene.hpp"
-#include "Skybox.hpp"
-#include "Camera.hpp"
+#include <Window.hpp>
+#include <SDL3/SDL_main.h>
 
-using namespace udit;
+using udit::Scene;
+using udit::Window;
 
-int main()
+int main(int, char* [])
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    constexpr unsigned viewport_width = 1024;
+    constexpr unsigned viewport_height = 576;
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Sistema Solar", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
+    Window window("OpenGL example", viewport_width, viewport_height, { 3, 3 });
+    Scene  scene(viewport_width, viewport_height);
 
-    gladLoadGL(glfwGetProcAddress);
+    bool exit = false;
 
-    Scene scene(1280, 720);
-    Camera camera;
-    Skybox skybox("assets/skybox/");
-
-    while (!glfwWindowShouldClose(window))
+    do
     {
+        // Se procesan los eventos acumulados:
+
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_EVENT_QUIT)
+            {
+                exit = true;
+            }
+        }
+
+        // Se actualiza la escena:
+
         scene.update();
 
-        skybox.render(camera);
+        // Se redibuja la escena:
+
         scene.render();
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+        // Se actualiza el contenido de la ventana:
 
-    glfwTerminate();
+        window.swap_buffers();
+    } while (not exit);
+
+    SDL_Quit();
+
     return 0;
 }
