@@ -1,130 +1,102 @@
-#include "terrain.hpp"
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+// TerrainDunes.cpp
+#include "Terrain.hpp"
+#include <vector>
 #include <cmath>
+
+using std::vector;
 
 namespace udit
 {
-    Terrain::Terrain(int width, int depth)
-        : width_(width), depth_(depth)
+    TerrainDunes::TerrainDunes(float width, float depth, unsigned x_slices, unsigned z_slices)
     {
-        generate(width, depth);
+        generateMesh(width, depth, x_slices, z_slices);
     }
 
-    Terrain::~Terrain()
+    TerrainDunes::~TerrainDunes()
     {
-        if (vbo_) glDeleteBuffers(1, &vbo_);
-        if (vao_) glDeleteVertexArrays(1, &vao_);
+        glDeleteVertexArrays(1, &vao_id);
+        glDeleteBuffers(1, &vbo_id);
+        glDeleteBuffers(1, &ebo_id);
     }
 
-    void Terrain::generate(int width, int depth)
+    void TerrainDunes::generateMesh(float width, float depth, unsigned x_slices, unsigned z_slices)
     {
-        width_ = width;
-        depth_ = depth;
+        // -----------------------------
+        // VÉRTICES
+        // -----------------------------
+        vector<float> vertices;
+        float x_start = -width * 0.5f;
+        float z_start = -depth * 0.5f;
+        float x_step = width / float(x_slices);
+        float z_step = depth / float(z_slices);
 
-        std::vector<Vertex> vertices;
-        float sizeX = 1.0f;
-        float sizeZ = 1.0f;
+        for (unsigned j = 0; j <= z_slices; ++j)
+        {
+            float z = z_start + j * z_step;
+            for (unsigned i = 0; i <= x_slices; ++i)
+            {
+                float x = x_start + i * x_step;
+                float y = sin(x * 0.5f) * cos(z * 0.7f) * 0.5f; // altura de dunas
 
-        for (int z = 0; z < depth - 1; ++z) {
-            for (int x = 0; x < width - 1; ++x) {
-                glm::vec3 v0(x * sizeX, h(x, z), z * sizeZ);
-                glm::vec3 v1((x + 1) * sizeX, h(x + 1, z), z * sizeZ);
-                glm::vec3 v2(x * sizeX, h(x, z + 1), (z + 1) * sizeZ);
-                glm::vec3 v3((x + 1) * sizeX, h(x + 1, z + 1), (z + 1) * sizeZ);
-
-                glm::vec3 n0 = compute_normal(x, z);
-                glm::vec3 n1 = compute_normal(x + 1, z);
-                glm::vec3 n2 = compute_normal(x, z + 1);
-                glm::vec3 n3 = compute_normal(x + 1, z + 1);
-
-                vertices.push_back({ v0, n0 });
-                vertices.push_back({ v2, n2 });
-                vertices.push_back({ v3, n3 });
-                vertices.push_back({ v0, n0 });
-                vertices.push_back({ v3, n3 });
-                vertices.push_back({ v1, n1 });
+                vertices.push_back(x);
+                vertices.push_back(y);
+                vertices.push_back(z);
             }
         }
 
-        create_buffers(vertices);
-    }
+        // -----------------------------
+        // ÍNDICES (dos triángulos por celda)
+        // -----------------------------
+        vector<unsigned int> indices;
+        for (unsigned j = 0; j < z_slices; ++j)
+        {
+            for (unsigned i = 0; i < x_slices; ++i)
+            {
+                unsigned topLeft = j * (x_slices + 1) + i;
+                unsigned topRight = topLeft + 1;
+                unsigned bottomLeft = topLeft + (x_slices + 1);
+                unsigned bottomRight = bottomLeft + 1;
 
-    void Terrain::create_buffers(const std::vector<Vertex>& vertices)
-    {
-        count_ = static_cast<GLsizei>(vertices.size());
+                // Primer triángulo
+                indices.push_back(topLeft);
+                indices.push_back(bottomLeft);
+                indices.push_back(topRight);
 
-        glGenVertexArrays(1, &vao_);
-        glGenBuffers(1, &vbo_);
-        glBindVertexArray(vao_);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+                // Segundo triángulo
+                indices.push_back(topRight);
+                indices.push_back(bottomLeft);
+                indices.push_back(bottomRight);
+            }
+        }
 
+        index_count = indices.size();
+
+        // -----------------------------
+        // CREAR VAO / VBO / EBO
+        // -----------------------------
+        glGenVertexArrays(1, &vao_id);
+        glGenBuffers(1, &vbo_id);
+        glGenBuffers(1, &ebo_id);
+
+        glBindVertexArray(vao_id);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_id);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 
         glBindVertexArray(0);
     }
 
-    glm::vec3 Terrain::compute_normal(int x, int z) const
+    void TerrainDunes::render()
     {
-        float hL = h(x - 1, z);
-        float hR = h(x + 1, z);
-        float hD = h(x, z - 1);
-        float hU = h(x, z + 1);
-        glm::vec3 n(-(hR - hL), 2.0f, -(hU - hD));
-        return glm::normalize(n);
-    }
-
-    float Terrain::h(int i, int j) const
-    {
-        float base = 0.5f * sin(i * 0.25f) * cos(j * 0.25f);
-        float detail = 0.25f * sin(j * 0.5f);
-        return base + detail;
-    }
-
-    float Terrain::height(float x, float z)
-    {
-        float base = 0.5f * sin(x * 0.25f) * cos(z * 0.25f);
-        float detail = 0.25f * sin(z * 0.5f);
-        return base + detail;
-    }
-
-    void Terrain::render(const glm::mat4& proj, const glm::mat4& view, GLuint shader_prog, const glm::vec3& light_pos, const glm::vec3& view_pos)
-    {
-        glUseProgram(shader_prog);
-        GLint loc_mvp = glGetUniformLocation(shader_prog, "MVP");
-        GLint loc_model = glGetUniformLocation(shader_prog, "model");
-        GLint loc_color = glGetUniformLocation(shader_prog, "u_color");
-        GLint loc_light = glGetUniformLocation(shader_prog, "u_light_pos");
-        GLint loc_view = glGetUniformLocation(shader_prog, "u_view_pos");
-        GLint loc_alpha = glGetUniformLocation(shader_prog, "u_alpha");
-
-        glBindVertexArray(vao_);
-
-        const int tile_range = 2;
-        float tile_size = 30.0f;
-        for (int dz = -tile_range; dz <= tile_range; ++dz)
-            for (int dx = -tile_range; dx <= tile_range; ++dx)
-            {
-                glm::mat4 model(1.0f);
-                model = glm::translate(model, glm::vec3(dx * tile_size, 0.f, dz * tile_size));
-
-                glm::mat4 mvp = proj * view * model;
-
-                glUniformMatrix4fv(loc_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
-                glUniformMatrix4fv(loc_model, 1, GL_FALSE, glm::value_ptr(model));
-                glUniform3f(loc_color, 0.9f, 0.85f, 0.7f);
-                glUniform3f(loc_light, light_pos.x, light_pos.y, light_pos.z);
-                glUniform3f(loc_view, view_pos.x, view_pos.y, view_pos.z);
-                glUniform1f(loc_alpha, 1.0f);
-
-                glDrawArrays(GL_TRIANGLES, 0, count_);
-            }
-
+        glBindVertexArray(vao_id);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe para ver triángulos
+        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 }
