@@ -5,79 +5,104 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include <stb_image.h>
 
-namespace udit
-{
+namespace udit {
 
     using namespace std;
     using namespace glm;
 
+    // ------------------------------
+    //  DEFINICIÓN DE COORDENADAS
+    // ------------------------------
     const GLfloat Skybox::coordinates[] =
     {
-        -1.0f, +1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
-        +1.0f, -1.0f, -1.0f,
-        +1.0f, -1.0f, -1.0f,
-        +1.0f, +1.0f, -1.0f,
-        -1.0f, +1.0f, -1.0f,
-        -1.0f, -1.0f, +1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
         -1.0f, -1.0f, -1.0f,
-        -1.0f, +1.0f, -1.0f,
-        -1.0f, +1.0f, -1.0f,
-        -1.0f, +1.0f, +1.0f,
-        -1.0f, -1.0f, +1.0f,
-        +1.0f, -1.0f, -1.0f,
-        +1.0f, -1.0f, +1.0f,
-        +1.0f, +1.0f, +1.0f,
-        +1.0f, +1.0f, +1.0f,
-        +1.0f, +1.0f, -1.0f,
-        +1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, +1.0f,
-        -1.0f, +1.0f, +1.0f,
-        +1.0f, +1.0f, +1.0f,
-        +1.0f, +1.0f, +1.0f,
-        +1.0f, -1.0f, +1.0f,
-        -1.0f, -1.0f, +1.0f,
-        -1.0f, +1.0f, -1.0f,
-        +1.0f, +1.0f, -1.0f,
-        +1.0f, +1.0f, +1.0f,
-        +1.0f, +1.0f, +1.0f,
-        -1.0f, +1.0f, +1.0f,
-        -1.0f, +1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
         -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, +1.0f,
-        +1.0f, -1.0f, -1.0f,
-        +1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, +1.0f,
-        +1.0f, -1.0f, +1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
     };
 
-    const std::string Skybox::vertex_shader_code =
-        "#version 330\n"
-        "uniform mat4 model_view_matrix;"
-        "uniform mat4 projection_matrix;"
-        "layout (location = 0) in vec3 vertex_coordinates;"
-        "out vec3 texture_coordinates;"
-        "void main() {"
-        " texture_coordinates = vertex_coordinates;"
-        " gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
-        "}";
+    // ------------------------------
+    //  SHADERS DEL SKYBOX
+    // ------------------------------
+    const std::string Skybox::vertex_shader_code = R"(
 
-    const std::string Skybox::fragment_shader_code =
-        "#version 330\n"
-        "in vec3 texture_coordinates;"
-        "out vec4 fragment_color;"
-        "uniform samplerCube sampler;"
-        "void main() {"
-        " fragment_color = texture(sampler, texture_coordinates);"
-        "}";
+#version 330 core
+layout(location = 0) in vec3 position;
 
-    Skybox::Skybox(const std::string& texture_base_path)
-        : texture_cube(texture_base_path)
+uniform mat4 model_view_matrix;
+uniform mat4 projection_matrix;
+
+out vec3 TexCoords;
+
+void main()
+{
+    TexCoords = position;
+    gl_Position = projection_matrix * model_view_matrix * vec4(position, 1.0);
+}
+
+)";
+
+    const std::string Skybox::fragment_shader_code = R"(
+
+#version 330 core
+in vec3 TexCoords;
+out vec4 FragColor;
+
+uniform samplerCube sampler;
+
+void main()
+{
+    FragColor = texture(sampler, TexCoords);
+}
+
+)";
+
+    // ------------------------------
+    //  CONSTRUCTOR
+    // ------------------------------
+    Skybox::Skybox(const std::vector<std::string>& faces_paths)
     {
-        assert(texture_cube.is_ok());
-
         shader_program_id = compile_shaders();
+        cubemap_texture_id = loadCubemap(faces_paths);
 
         model_view_matrix_id = glGetUniformLocation(shader_program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(shader_program_id, "projection_matrix");
@@ -91,36 +116,34 @@ namespace udit
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
         glBindVertexArray(0);
-
-        // Matrices fijas para el skybox
-        mat4 view = mat4(1.0f); // identidad, sin traslación
-        mat4 projection = perspective(radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-
-        glUseProgram(shader_program_id);
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, value_ptr(view));
-        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, value_ptr(projection));
-        glUseProgram(0);
     }
 
+    // ------------------------------
+    //  DESTRUCTOR
+    // ------------------------------
     Skybox::~Skybox()
     {
         glDeleteVertexArrays(1, &vao_id);
         glDeleteBuffers(1, &vbo_id);
+        glDeleteTextures(1, &cubemap_texture_id);
     }
 
-    void Skybox::render()
+    // ------------------------------
+    //  RENDER
+    // ------------------------------
+    void Skybox::render(const mat4& view, const mat4& projection)
     {
         glUseProgram(shader_program_id);
 
+        mat4 view_no_translation = mat4(mat3(view));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, value_ptr(view_no_translation));
+        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, value_ptr(projection));
+
         glActiveTexture(GL_TEXTURE0);
-        texture_cube.bind();
-
-        GLint loc_sampler = glGetUniformLocation(shader_program_id, "sampler");
-        if (loc_sampler >= 0) glUniform1i(loc_sampler, 0);
-
-        GLint prevDepthFunc;
-        glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture_id);
+        glUniform1i(glGetUniformLocation(shader_program_id, "sampler"), 0);
 
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
@@ -130,66 +153,42 @@ namespace udit
         glBindVertexArray(0);
 
         glDepthMask(GL_TRUE);
-        glDepthFunc(prevDepthFunc);
-
-        glUseProgram(0);
+        glDepthFunc(GL_LESS);
     }
 
-    GLuint Skybox::compile_shaders()
+    // ------------------------------
+    //  CARGA DE CUBEMAP
+    // ------------------------------
+    GLuint Skybox::loadCubemap(const std::vector<std::string>& faces_paths)
     {
-        GLint succeeded = GL_FALSE;
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
-        GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
-        GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+        int width, height, nrChannels;
 
-        const char* vertex_shaders_code[] = { vertex_shader_code.c_str() };
-        const char* fragment_shaders_code[] = { fragment_shader_code.c_str() };
-        const GLint vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
-        const GLint fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
+        for (GLuint i = 0; i < faces_paths.size(); i++)
+        {
+            unsigned char* data = stbi_load(faces_paths[i].c_str(), &width, &height, &nrChannels, 0);
+            if (data)
+            {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                    0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+                stbi_image_free(data);
+            }
+            else
+            {
+                std::cerr << "Failed to load cubemap face: " << faces_paths[i] << std::endl;
+            }
+        }
 
-        glShaderSource(vertex_shader_id, 1, vertex_shaders_code, vertex_shaders_size);
-        glShaderSource(fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-        glCompileShader(vertex_shader_id);
-        glCompileShader(fragment_shader_id);
-
-        glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error(vertex_shader_id);
-
-        glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error(fragment_shader_id);
-
-        GLuint program_id = glCreateProgram();
-        glAttachShader(program_id, vertex_shader_id);
-        glAttachShader(program_id, fragment_shader_id);
-        glLinkProgram(program_id);
-
-        glDeleteShader(vertex_shader_id);
-        glDeleteShader(fragment_shader_id);
-
-        return program_id;
+        return textureID;
     }
 
-    void Skybox::show_compilation_error(GLuint shader_id)
-    {
-        string info_log;
-        GLint info_log_length;
-        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-        info_log.resize(info_log_length);
-        glGetShaderInfoLog(shader_id, info_log_length, NULL, &info_log[0]);
-        cerr << info_log << endl;
-        assert(false);
-    }
-
-    void Skybox::show_linkage_error(GLuint program_id)
-    {
-        string info_log;
-        GLint info_log_length;
-        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
-        info_log.resize(info_log_length);
-        glGetProgramInfoLog(program_id, info_log_length, NULL, &info_log[0]);
-        cerr << info_log << endl;
-        assert(false);
-    }
-
-}
+} // namespace udit
