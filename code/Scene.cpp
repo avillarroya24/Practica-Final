@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "Skybox.hpp"
 #include <gtc/type_ptr.hpp>
 
 using namespace glm;
