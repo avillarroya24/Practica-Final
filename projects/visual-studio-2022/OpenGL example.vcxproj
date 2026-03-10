@@ -85,16 +85,12 @@
     <ClCompile Include="..\..\code\Scene.cpp" />
     <ClCompile Include="..\..\code\Skybox.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\code\Color.hpp" />
     <ClInclude Include="..\..\code\Scene.hpp" />
     <ClInclude Include="..\..\code\Skybox.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
-    <ClInclude Include="Camera.hpp" />
-    <ClInclude Include="Terrain.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
