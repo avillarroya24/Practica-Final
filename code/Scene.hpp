@@ -1,40 +1,29 @@
 #pragma once
-#include <glad/gl.h>
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <vector>
 
-namespace udit
+#include <memory>
+
+#include "Cube.hpp"
+#include "Model.hpp"
+#include "Material.hpp"
+
+using namespace std;
+
+class Scene
 {
-    class Scene
-    {
-    public:
-        Scene(int width, int height);
-        ~Scene();
+    shared_ptr<Cube> cube_mesh;
+    shared_ptr<Material> material;
 
-        void update();
-        void render();
+    Model cube1;
+    Model cube2;
 
-    private:
-        void generate_sphere();
-        GLuint compile_shaders();
+    GLint model_view_matrix_id;
+    GLint projection_matrix_id;
 
-        GLuint vao = 0;
-        GLuint vbo = 0;
-        GLuint ebo = 0;   //NECESARIO PARA GL_LINES
+public:
 
-        GLuint shader_program = 0;
+    Scene();
 
-        GLint model_id = -1;
-        GLint view_id = -1;
-        GLint projection_id = -1;
+    void update(float time);
 
-        unsigned vertex_count = 0;
-
-        float earth_rotation = 0.0f;
-        float moon_rotation = 0.0f;
-        float moon_orbit = 0.0f;
-
-        int width, height;
-    };
-}
+    void render();
+};
