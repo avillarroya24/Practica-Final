@@ -3,29 +3,30 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+
 struct Transform
 {
     Transform* parent = nullptr;
 
-    glm::vec3 position{ 0.f,0.f,0.f };
-    glm::vec3 rotation{ 0.f,0.f,0.f };
-    glm::vec3 scale{ 1.f,1.f,1.f };
+    glm::vec3 position{ 0,0,0 };
+    glm::vec3 rotation{ 0,0,0 };
+    glm::vec3 scale{ 1,1,1 };
 
     glm::mat4 get_transform_matrix() const
     {
-        glm::mat4 matrix(1.f);
+        glm::mat4 transform_matrix(1.0f);
 
-        matrix = glm::translate(matrix, position);
+        transform_matrix = glm::translate(transform_matrix, position);
 
-        matrix = glm::rotate(matrix, rotation.x, glm::vec3(1, 0, 0));
-        matrix = glm::rotate(matrix, rotation.y, glm::vec3(0, 1, 0));
-        matrix = glm::rotate(matrix, rotation.z, glm::vec3(0, 0, 1));
+        transform_matrix = glm::rotate(transform_matrix, rotation.x, glm::vec3(1, 0, 0));
+        transform_matrix = glm::rotate(transform_matrix, rotation.y, glm::vec3(0, 1, 0));
+        transform_matrix = glm::rotate(transform_matrix, rotation.z, glm::vec3(0, 0, 1));
 
-        matrix = glm::scale(matrix, scale);
+        transform_matrix = glm::scale(transform_matrix, scale);
 
         if (parent)
-            return parent->get_transform_matrix() * matrix;
+            return parent->get_transform_matrix() * transform_matrix;
 
-        return matrix;
+        return transform_matrix;
     }
 };
