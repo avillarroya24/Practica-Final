@@ -71,13 +71,13 @@
     <ClInclude Include="Model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Transform.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Material.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shader_Program.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
