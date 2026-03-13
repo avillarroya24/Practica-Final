@@ -1,17 +1,17 @@
 #pragma once
 
 #include <memory>
+#include <GL/glew.h>
 
 #include "Cube.hpp"
 #include "Model.hpp"
 #include "Material.hpp"
-
-using namespace std;
+#include "Shader_Program.hpp"
 
 class Scene
 {
-    shared_ptr<Cube> cube_mesh;
-    shared_ptr<Material> material;
+    std::shared_ptr<Cube> cube_mesh;
+    std::shared_ptr<Material> material;
 
     Model cube1;
     Model cube2;
@@ -24,6 +24,5 @@ public:
     Scene();
 
     void update(float time);
-
     void render();
 };

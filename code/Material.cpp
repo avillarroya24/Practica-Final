@@ -1,11 +1,7 @@
 #include "Material.hpp"
-
-Material::Material()
-{
-}
+#include "Shader_Program.hpp"
 
 void Material::use()
 {
-    if (shader_program)
-        shader_program->use();
+    shader_program->use();
 }

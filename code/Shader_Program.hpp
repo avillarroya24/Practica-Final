@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <GL/glew.h>
+#include <GL/gl.h>
 
 using namespace std;
 
