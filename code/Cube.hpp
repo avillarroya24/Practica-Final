@@ -1,14 +1,12 @@
 #pragma once
 
-#include "Mesh.hpp"
-
-class Cube : public Mesh
+class Cube
 {
-    static const GLfloat coordinates[];
-    static const GLfloat colors[];
-    static const GLubyte indices[];
-
 public:
-
     Cube();
+
+    // función mínima que crea buffers (puedes implementarla más tarde con OpenGL)
+    void create_buffers(const float* coords, int coords_count,
+        const float* colors, int colors_count,
+        const unsigned int* indices, int indices_count);
 };

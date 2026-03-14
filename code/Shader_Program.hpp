@@ -1,34 +1,37 @@
 #pragma once
 
-#include <string>
+// En Windows, siempre incluir windows.h antes de gl.h
+#include <windows.h>
 #include <GL/gl.h>
-
-using namespace std;
+#include <string>
 
 class Shader_Program
 {
-    GLint shader_program_id = -1;   // -1 indica error
+private:
+    GLint shader_program_id;   // -1 indica error
 
-    string vertex_code;
-    string fragment_code;
+    std::string vertex_code;
+    std::string fragment_code;
+
+    void compile_shaders();
 
 public:
+    // constructor
+    Shader_Program(const std::string& vertex_shader_code,
+        const std::string& fragment_shader_code);
 
-    Shader_Program(const string& vertex_shader_code, const string& fragment_shader_code);
-
+    // chequea si el shader se compiló y enlazó correctamente
     bool good() const
     {
         return shader_program_id != -1;
     }
 
-    void use();
+    // activa este shader
+    void use() const;
 
-    GLint get_uniform_location(const char* uniform_name)
+    // obtiene la ubicación de un uniform
+    GLint get_uniform_location(const char* uniform_name) const
     {
-        return glGetUniformLocation(shader_program_id, uniform_name);
+        if (shader_program_id == -1) return -1;
     }
-
-private:
-
-    void compile_shaders();
 };

@@ -6,6 +6,7 @@ class Mesh
 {
 protected:
 
+    // enumeración de VBOs
     enum
     {
         COORDINATES_VBO,
@@ -14,12 +15,14 @@ protected:
         VBO_COUNT
     };
 
-    GLuint vbo_ids[VBO_COUNT];
-    GLuint vao_id = 0;
-
 public:
 
+    // constructor inicializa todo a 0
+    Mesh();
+
+    // destructor virtual
     virtual ~Mesh();
 
+    // función de render
     void render();
 };
