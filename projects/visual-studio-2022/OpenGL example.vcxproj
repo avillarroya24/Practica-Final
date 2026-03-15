@@ -83,27 +83,16 @@
   <ItemGroup>
     <ClCompile Include="..\..\code\Cube.cpp" />
     <ClCompile Include="..\..\code\main.cpp" />
-    <ClCompile Include="..\..\code\Material.cpp" />
-    <ClCompile Include="..\..\code\Mesh.cpp" />
-    <ClCompile Include="..\..\code\Model.cpp" />
     <ClCompile Include="..\..\code\Scene.cpp" />
-    <ClCompile Include="..\..\code\Shader_Program.cpp" />
     <ClCompile Include="..\..\code\Skybox.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
-    <ClCompile Include="Node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\code\Color.hpp" />
     <ClInclude Include="..\..\code\Cube.hpp" />
-    <ClInclude Include="..\..\code\Material.hpp" />
-    <ClInclude Include="..\..\code\Mesh.hpp" />
-    <ClInclude Include="..\..\code\Model.hpp" />
-    <ClInclude Include="..\..\code\Node.hpp" />
     <ClInclude Include="..\..\code\Scene.hpp" />
-    <ClInclude Include="..\..\code\Shader_Program.hpp" />
     <ClInclude Include="..\..\code\Skybox.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
-    <ClInclude Include="Transform.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
