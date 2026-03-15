@@ -1,38 +1,26 @@
 #pragma once
-
+#include <memory>
+#include <glm/gl.hpp>
 #include "Cube.hpp"
-#include <string>
 
-namespace udit
+using namespace std;
+using namespace glm;
+
+class Scene
 {
+private:
+    shared_ptr<Cube> cube_mesh;
+    shared_ptr<Material> material;
 
-    class Scene
-    {
-    private:
+    Model cube1;
+    Model cube2;
 
-        static const std::string   vertex_shader_code;
-        static const std::string fragment_shader_code;
+    GLint model_view_matrix_id;
+    GLint projection_matrix_id;
 
-        GLint  model_view_matrix_id;
-        GLint  projection_matrix_id;
+public:
+    Scene();
+    ~Scene() = default;
 
-        Cube   cube;
-        float  angle;
-
-    public:
-
-        Scene(unsigned width, unsigned height);
-
-        void   update();
-        void   render();
-        void   resize(unsigned width, unsigned height);
-
-    private:
-
-        GLuint compile_shaders();
-        void   show_compilation_error(GLuint  shader_id);
-        void   show_linkage_error(GLuint program_id);
-
-    };
-
-}
+    void render();
+};
