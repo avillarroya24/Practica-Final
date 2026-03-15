@@ -1,4 +1,3 @@
-
 // Este código es de dominio público
 // angel.rodriguez@udit.es
 
@@ -10,72 +9,73 @@
 
 namespace udit
 {
-    
+
     class Window
     {
     public:
 
         struct OpenGL_Context_Settings
         {
-            unsigned version_major       = 3;
-            unsigned version_minor       = 3;
-            bool     core_profile        = true;
-            unsigned depth_buffer_size   = 24;
+            unsigned version_major = 3;
+            unsigned version_minor = 3;
+            bool     core_profile = true;
+            unsigned depth_buffer_size = 24;
             unsigned stencil_buffer_size = 0;
-            bool     enable_vsync        = true;
+            bool     enable_vsync = true;
         };
 
     private:
 
-        SDL_Window  * window_handle;
-        SDL_GLContext opengl_context;
+        SDL_Window* window_handle = nullptr;
+        SDL_GLContext opengl_context = nullptr;
 
     public:
 
-        Window
-        (
-            const std::string & title,
-            unsigned width, 
-            unsigned height, 
-            const OpenGL_Context_Settings & context_details
-        )
-        :
-            Window(title.c_str (), width, height, context_details)
+        // Constructor con std::string
+        Window(const std::string& title,
+            unsigned width,
+            unsigned height,
+            const OpenGL_Context_Settings& context_details)
+            : Window(title.c_str(), width, height, context_details)
         {
         }
 
-        Window
-        (
-            const char * title, 
-            unsigned width, 
-            unsigned height, 
-            const OpenGL_Context_Settings & context_details
-        );
+        // Constructor principal
+        Window(const char* title,
+            unsigned width,
+            unsigned height,
+            const OpenGL_Context_Settings& context_details);
 
-       ~Window();
+        ~Window();
 
     public:
 
-        Window(const Window & ) = delete;
+        // No copiar
+        Window(const Window&) = delete;
+        Window& operator=(const Window&) = delete;
 
-        Window & operator = (const Window & ) = delete;
-        
-        Window(Window && other) noexcept
+        // Move constructor
+        Window(Window&& other) noexcept
         {
-            this->window_handle  = std::exchange (other.window_handle,  nullptr);
-            this->opengl_context = std::exchange (other.opengl_context, nullptr);
+            window_handle = std::exchange(other.window_handle, nullptr);
+            opengl_context = std::exchange(other.opengl_context, nullptr);
         }
 
-        Window & operator = (Window && other) noexcept
+        // Move assignment
+        Window& operator=(Window&& other) noexcept
         {
-            this->window_handle  = std::exchange (other.window_handle,  nullptr);
-            this->opengl_context = std::exchange (other.opengl_context, nullptr);
+            if (this != &other)
+            {
+                window_handle = std::exchange(other.window_handle, nullptr);
+                opengl_context = std::exchange(other.opengl_context, nullptr);
+            }
+
+            return *this;
         }
 
     public:
 
-        void swap_buffers ();
-
+        void swap_buffers();
     };
 
 }

@@ -1,28 +1,218 @@
+﻿#pragma once
+
 #include "Scene.hpp"
-#include <windows.h>
-#include <GL/gl.h>
 
-Scene::Scene()
+#include <iostream>
+#include <cassert>
+
+#include <glm.hpp>                          // vec3, vec4, ivec4, mat4
+#include <gtc/matrix_transform.hpp>         // translate, rotate, scale, perspective
+#include <gtc/type_ptr.hpp>                 // value_ptr
+
+namespace udit
 {
-    cube1.transform.position[0] = 0.0f;
-    cube1.transform.position[1] = 0.0f;
-    cube1.transform.position[2] = -10.0f;
 
-    cube2.transform.position[0] = 4.0f;
-    cube2.transform.position[1] = 0.0f;
-    cube2.transform.position[2] = -10.0f;
-}
+    using namespace std;
+    using namespace glm;
 
-void Scene::update(float time)
-{
-    cube1.transform.rotation[1] = time;
-    cube2.transform.rotation[1] = time * 3.0f;
-}
+    const string Scene::vertex_shader_code =
 
-void Scene::render()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        "#version 330\n"
+        ""
+        "uniform mat4 model_view_matrix;"
+        "uniform mat4 projection_matrix;"
+        ""
+        "layout (location = 0) in vec3 vertex_coordinates;"
+        "layout (location = 1) in vec3 vertex_color;"
+        ""
+        "out vec3 front_color;"
+        ""
+        "void main()"
+        "{"
+        "   gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
+        "   front_color = vertex_color;"
+        "}";
 
-    cube1.render();
-    cube2.render();
+    const string Scene::fragment_shader_code =
+
+        "#version 330\n"
+        ""
+        "in  vec3    front_color;"
+        "out vec4 fragment_color;"
+        ""
+        "void main()"
+        "{"
+        "    fragment_color = vec4(front_color, 1.0);"
+        "}";
+
+    Scene::Scene(unsigned width, unsigned height)
+        :
+        angle(0)
+    {
+        // Se establece la configuración básica:
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glClearColor(.2f, .2f, .2f, 1.f);
+
+        // Se compilan y se activan los shaders:
+
+        GLuint program_id = compile_shaders();
+
+        glUseProgram(program_id);
+
+        model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
+        projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
+
+        resize(width, height);
+    }
+
+    void Scene::update()
+    {
+        angle += 0.01f;
+        const float separacion = 3.0f;
+
+    }
+
+    void Scene::render()
+    {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // ---------- CUBO GRANDE (centrado y girando sobre sí mismo) ----------
+        glm::mat4 model_big(1.0f);
+        model_big = glm::translate(model_big, glm::vec3(0.f, 0.f, -6.f));       // centrar cubo grande
+        model_big = glm::rotate(model_big, angle, glm::vec3(0.f, 1.f, 0.f));    // girar sobre sí mismo
+
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_big));
+        cube.render();
+
+        // ---------- CUBO PEQUEÑO (orbitando alrededor del grande) ----------
+        glm::mat4 model_small(1.0f);
+
+        float orbit_radius = 2.5f;
+
+        // 1️⃣ Orbitar alrededor del cubo grande
+        model_small = glm::rotate(model_small, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
+        model_small = glm::translate(model_small, glm::vec3(orbit_radius, 0.f, 0.f));
+
+        // 2️⃣ Aplicar la transformación del cubo grande como "padre"
+        model_small = model_big * model_small;
+
+        // 3️⃣ Escalar el cubo pequeño para que sea más pequeño
+        model_small = glm::scale(model_small, glm::vec3(0.5f, 0.5f, 0.5f)); // mitad del tamaño del cubo grande
+
+        // 4️⃣ No rotar sobre sí mismo
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_small));
+        cube.render();
+    }
+
+
+
+    void Scene::resize(unsigned width, unsigned height)
+    {
+        glm::mat4 projection_matrix = glm::perspective(20.f, GLfloat(width) / height, 1.f, 5000.f);
+
+        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+
+        glViewport(0, 0, width, height);
+    }
+
+    GLuint Scene::compile_shaders()
+    {
+        GLint succeeded = GL_FALSE;
+
+        // Se crean objetos para los shaders:
+
+        GLuint   vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+        GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+
+        // Se carga el código de los shaders:
+
+        const char* vertex_shaders_code[] = { vertex_shader_code.c_str() };
+        const char* fragment_shaders_code[] = { fragment_shader_code.c_str() };
+        const GLint    vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
+        const GLint  fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
+
+        glShaderSource(vertex_shader_id, 1, vertex_shaders_code, vertex_shaders_size);
+        glShaderSource(fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
+
+        // Se compilan los shaders:
+
+        glCompileShader(vertex_shader_id);
+        glCompileShader(fragment_shader_id);
+
+        // Se comprueba que si la compilación ha tenido éxito:
+
+        glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
+        if (!succeeded) show_compilation_error(vertex_shader_id);
+
+        glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
+        if (!succeeded) show_compilation_error(fragment_shader_id);
+
+        // Se crea un objeto para un programa:
+
+        GLuint program_id = glCreateProgram();
+
+        // Se cargan los shaders compilados en el programa:
+
+        glAttachShader(program_id, vertex_shader_id);
+        glAttachShader(program_id, fragment_shader_id);
+
+        // Se linkan los shaders:
+
+        glLinkProgram(program_id);
+
+        // Se comprueba si el linkage ha tenido éxito:
+
+        glGetProgramiv(program_id, GL_LINK_STATUS, &succeeded);
+        if (!succeeded) show_linkage_error(program_id);
+
+        // Se liberan los shaders compilados una vez se han linkado:
+
+        glDeleteShader(vertex_shader_id);
+        glDeleteShader(fragment_shader_id);
+
+        return (program_id);
+    }
+
+    void Scene::show_compilation_error(GLuint shader_id)
+    {
+        string info_log;
+        GLint  info_log_length;
+
+        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+
+        info_log.resize(info_log_length);
+
+        glGetShaderInfoLog(shader_id, info_log_length, NULL, &info_log.front());
+
+        cerr << info_log.c_str() << endl;
+
+#ifdef _MSC_VER
+        //OutputDebugStringA (info_log.c_str ());
+#endif
+
+        assert(false);
+    }
+
+    void Scene::show_linkage_error(GLuint program_id)
+    {
+        string info_log;
+        GLint  info_log_length;
+
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
+
+        info_log.resize(info_log_length);
+
+        glGetProgramInfoLog(program_id, info_log_length, NULL, &info_log.front());
+
+        cerr << info_log.c_str() << endl;
+
+#ifdef _MSC_VER
+        //OutputDebugStringA (info_log.c_str ());
+#endif
+
+        assert(false);
+    }
+
 }
