@@ -13,7 +13,6 @@ namespace udit
 {
 
     using namespace std;
-    using namespace glm;
 
     const string Scene::vertex_shader_code =
 
@@ -78,31 +77,24 @@ namespace udit
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // ---------- CUBO GRANDE (centrado y girando sobre sí mismo) ----------
-        glm::mat4 model_big(1.0f);
-        model_big = glm::translate(model_big, glm::vec3(0.f, 0.f, -6.f));       // centrar cubo grande
-        model_big = glm::rotate(model_big, angle, glm::vec3(0.f, 1.f, 0.f));    // girar sobre sí mismo
+        // --- Cubo grande (ahora más pequeño) ---
+        glm::mat4 model_view_matrix = glm::mat4(1.0f); // identidad
+        model_view_matrix = glm::translate(model_view_matrix, glm::vec3(0.f, 0.f, -6.f)); // centrado
+        model_view_matrix = glm::rotate(model_view_matrix, angle, glm::vec3(0.f, 1.f, 0.f)); // gira sobre sí mismo
+        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.5f, 1.5f, 1.5f)); // un poco más pequeño
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_big));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view_matrix));
         cube.render();
 
-        // ---------- CUBO PEQUEÑO (orbitando alrededor del grande) ----------
-        glm::mat4 model_small(1.0f);
+        // --- Cubo pequeño orbitando alrededor del cubo central ---
+        glm::mat4 small_cube = glm::mat4(1.0f); // identidad
+        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f)); // misma base que el cubo grande
+        small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f)); // orbita alrededor del cubo grande
+        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f)); // distancia radial desde el cubo grande
+        small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f)); // gira sobre sí mismo
+        small_cube = glm::scale(small_cube, glm::vec3(0.5f, 0.5f, 0.5f)); // más pequeño
 
-        float orbit_radius = 2.5f;
-
-        // 1️⃣ Orbitar alrededor del cubo grande
-        model_small = glm::rotate(model_small, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
-        model_small = glm::translate(model_small, glm::vec3(orbit_radius, 0.f, 0.f));
-
-        // 2️⃣ Aplicar la transformación del cubo grande como "padre"
-        model_small = model_big * model_small;
-
-        // 3️⃣ Escalar el cubo pequeño para que sea más pequeño
-        model_small = glm::scale(model_small, glm::vec3(0.5f, 0.5f, 0.5f)); // mitad del tamaño del cubo grande
-
-        // 4️⃣ No rotar sobre sí mismo
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_small));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
         cube.render();
     }
 

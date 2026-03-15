@@ -1,4 +1,7 @@
 
+// Este código es de dominio público
+// angel.rodriguez@udit.es
+
 #ifndef CUBE_HEADER
 #define CUBE_HEADER
 

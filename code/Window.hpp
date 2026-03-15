@@ -1,6 +1,3 @@
-// Este código es de dominio público
-// angel.rodriguez@udit.es
-
 #pragma once
 
 #include <SDL3/SDL.h>

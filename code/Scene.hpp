@@ -1,26 +1,42 @@
+
+// Este código es de dominio público
+// angel.rodriguez@udit.es
+
 #pragma once
-#include <memory>
-#include <glm/gl.hpp>
+
 #include "Cube.hpp"
+#include <string>
 
-using namespace std;
-using namespace glm;
-
-class Scene
+namespace udit
 {
-private:
-    shared_ptr<Cube> cube_mesh;
-    shared_ptr<Material> material;
 
-    Model cube1;
-    Model cube2;
+    class Scene
+    {
+    private:
 
-    GLint model_view_matrix_id;
-    GLint projection_matrix_id;
+        static const std::string   vertex_shader_code;
+        static const std::string fragment_shader_code;
 
-public:
-    Scene();
-    ~Scene() = default;
+        GLint  model_view_matrix_id;
+        GLint  projection_matrix_id;
 
-    void render();
-};
+        Cube   cube;
+        float  angle;
+
+    public:
+
+        Scene(unsigned width, unsigned height);
+
+        void   update();
+        void   render();
+        void   resize(unsigned width, unsigned height);
+
+    private:
+
+        GLuint compile_shaders();
+        void   show_compilation_error(GLuint  shader_id);
+        void   show_linkage_error(GLuint program_id);
+
+    };
+
+}
