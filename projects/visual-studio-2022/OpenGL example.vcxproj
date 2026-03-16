@@ -85,11 +85,19 @@
     <ClCompile Include="..\..\code\main.cpp" />
     <ClCompile Include="..\..\code\Scene.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Node.cpp" />
+    <ClCompile Include="Tranform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\code\Cube.hpp" />
     <ClInclude Include="..\..\code\Scene.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
+    <ClInclude Include="Mesh.hpp" />
+    <ClInclude Include="Model.hpp" />
+    <ClInclude Include="Node.hpp" />
+    <ClInclude Include="Tranform.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
