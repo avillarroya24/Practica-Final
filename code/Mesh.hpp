@@ -1,7 +1,7 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 class Mesh
 {
@@ -16,12 +16,7 @@ public:
         if (vbo_id) glDeleteBuffers(1, &vbo_id);
     }
 
-    virtual void render() const
-    {
-        glBindVertexArray(vao_id);
-        // glDrawArrays o glDrawElements según configuración
-        glBindVertexArray(0);
-    }
+    virtual void render() const; //Declarado
 };
 
 #endif

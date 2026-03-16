@@ -10,11 +10,7 @@ class Model : public Node
 public:
     std::shared_ptr<Mesh> mesh;
 
-    void render() const
-    {
-        if (mesh)
-            mesh->render();
-    }
+    void render() const;
 };
 
 #endif
