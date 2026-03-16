@@ -1,37 +1,20 @@
-#pragma once
-#include <memory>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#ifndef MODEL_HPP
+#define MODEL_HPP
+
 #include "Node.hpp"
 #include "Mesh.hpp"
-#include <GL/gl.h>  // OpenGL moderno
-
-using namespace std;
+#include <memory>
 
 class Model : public Node
 {
-private:
-    shared_ptr<Mesh> mesh;
-
 public:
-    // Constructor vacío
-    Model() = default;
+    std::shared_ptr<Mesh> mesh;
 
-    // Setter para la malla
-    void set_mesh(shared_ptr<Mesh> m) { mesh = m; }
-
-    // Renderizar el modelo
-    void render(GLint model_view_matrix_id)
+    void render() const
     {
-        if (!mesh) return;
-
-        // Obtener la matriz de transformación del nodo
-        glm::mat4 transform_matrix = transform.get_transform_matrix();
-
-        // Enviar la matriz al shader
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(transform_matrix));
-
-        // Renderizar la malla
-        mesh->render();
+        if (mesh)
+            mesh->render();
     }
 };
+
+#endif

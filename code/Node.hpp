@@ -1,23 +1,17 @@
-#pragma once
+#ifndef NODE_HPP
+#define NODE_HPP
 
-#include "Transform.hpp"
-#include <vector>
+#include "Tranform.hpp"
 
 class Node
 {
 public:
     Transform transform;
 
-private:
-    Node* parent = nullptr;
-    std::vector<Node*> children;
-
-public:
-    Node() = default;
-
-    // Declaraciones SIN cuerpo
-    void set_parent(Node& node);
-    void add_child(Node& child);
-    glm::mat4 get_global_transform() const;
-    const std::vector<Node*>& get_children() const;
+    void set_parent(Node& node)
+    {
+        transform.parent = &node.transform;
+    }
 };
+
+#endif

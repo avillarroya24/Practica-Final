@@ -1,7 +1,3 @@
-
-// Este código es de dominio público
-// angel.rodriguez@udit.es
-
 #pragma once
 
 #include "Cube.hpp"
