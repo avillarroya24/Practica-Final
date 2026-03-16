@@ -10,6 +10,24 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\code\Cube.hpp" />
+    <ClInclude Include="..\..\code\Mesh.hpp" />
+    <ClInclude Include="..\..\code\Model.hpp" />
+    <ClInclude Include="..\..\code\Node.hpp" />
+    <ClInclude Include="..\..\code\Scene.hpp" />
+    <ClInclude Include="..\..\code\Tranform.hpp" />
+    <ClInclude Include="..\..\code\Window.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\code\Cube.cpp" />
+    <ClCompile Include="..\..\code\main.cpp" />
+    <ClCompile Include="..\..\code\Mesh.cpp" />
+    <ClCompile Include="..\..\code\Model.cpp" />
+    <ClCompile Include="..\..\code\Scene.cpp" />
+    <ClCompile Include="..\..\code\Tranform.cpp" />
+    <ClCompile Include="..\..\code\Window.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -80,25 +98,6 @@
       <AdditionalLibraryDirectories>../../libraries/sdl3/lib/x64;../../libraries/glad/lib/x64;../../libraries/soil2/lib/x64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\code\Cube.cpp" />
-    <ClCompile Include="..\..\code\main.cpp" />
-    <ClCompile Include="..\..\code\Scene.cpp" />
-    <ClCompile Include="..\..\code\Window.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Node.cpp" />
-    <ClCompile Include="Tranform.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\code\Cube.hpp" />
-    <ClInclude Include="..\..\code\Scene.hpp" />
-    <ClInclude Include="..\..\code\Window.hpp" />
-    <ClInclude Include="Mesh.hpp" />
-    <ClInclude Include="Model.hpp" />
-    <ClInclude Include="Node.hpp" />
-    <ClInclude Include="Tranform.hpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
