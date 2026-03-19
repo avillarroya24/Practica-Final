@@ -33,18 +33,23 @@ namespace udit
         "}";
 
     // ================= CONSTRUCTOR =================
-    Scene::Scene(unsigned width, unsigned height) : angle(0)
+    Scene::Scene(unsigned width, unsigned height)
+        : angle(0)
     {
+        // Configuración de OpenGL
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.05f, 0.05f, 0.2f, 1.0f);
 
+        // Compila y activa los shaders principales de la escena
         program_id = compile_shaders();
         glUseProgram(program_id);
 
+        // Obtén las ubicaciones de las matrices de transformación
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
+        // Configura tamaño de ventana y proyección
         resize(width, height);
 
         // ===== SKYBOX =====
@@ -54,7 +59,11 @@ namespace udit
                 Skybox::fragment_shader_code
             );
 
-        skybox = std::make_shared<Skybox>("skybox", skybox_shader);
+        // Inicializa el skybox con el shader y la ruta de texturas
+        skybox = std::make_shared<Skybox>(
+            "../../shared/assets/sky-cube-map-", // Ruta base de las texturas
+            skybox_shader
+        );
     }
 
     // ================= UPDATE =================
