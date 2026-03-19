@@ -3,17 +3,19 @@
 
 using namespace std;
 
+// ================= COORDENADAS DEL CUBO =================
 const GLfloat Skybox::coordinates[] = {
-    -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f, 1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f
+    -1.0f,  1.0f, -1.0f,  -1.0f, -1.0f, -1.0f,   1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,   1.0f,  1.0f, -1.0f,  -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,  -1.0f, -1.0f, -1.0f,  -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,  -1.0f,  1.0f,  1.0f,  -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,   1.0f, -1.0f,  1.0f,   1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,   1.0f,  1.0f, -1.0f,   1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,  -1.0f,  1.0f,  1.0f,   1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,   1.0f, -1.0f,  1.0f,  -1.0f, -1.0f,  1.0f
 };
 
+// ================= SHADERS =================
 const char* Skybox::vertex_shader_code =
 "#version 330 core\n"
 "layout(location = 0) in vec3 vertex_coordinates;\n"
@@ -34,67 +36,50 @@ const char* Skybox::fragment_shader_code =
 "    FragColor = texture(skybox, tex_coords);\n"
 "}";
 
+// ================= CONSTRUCTOR =================
 Skybox::Skybox(const std::string& texture_base_path, std::shared_ptr<Shader_Program> shader)
     : cubemap(texture_base_path), material(shader)
 {
+    // Crear VAO y VBO
     glGenVertexArrays(1, &vao_id);
     glGenBuffers(1, &vbo_id);
 
     glBindVertexArray(vao_id);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
     glBufferData(GL_ARRAY_BUFFER, sizeof(coordinates), coordinates, GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
     glBindVertexArray(0);
+
+    // Obtener ID de uniforms
+    model_view_id = material.get_shader()->get_uniform_location("model_view_matrix");
+    projection_id = material.get_shader()->get_uniform_location("projection_matrix");
 }
 
+// ================= RENDER =================
 void Skybox::render(const float* view_matrix, const float* projection_matrix)
 {
-    glDepthMask(GL_FALSE);
-    material.use(); // <- ahora usamos Material
+    glDepthMask(GL_FALSE); // desactivar escritura de depth
+
+    material.use();
     cubemap.bind();
 
-    GLint model_view_id = material.get_shader()->get_uniform_location("model_view_matrix");
-    GLint projection_id = material.get_shader()->get_uniform_location("projection_matrix");
-
+    // Actualizar uniforms
     glUniformMatrix4fv(model_view_id, 1, GL_FALSE, view_matrix);
     glUniformMatrix4fv(projection_id, 1, GL_FALSE, projection_matrix);
 
     glBindVertexArray(vao_id);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
-    glDepthMask(GL_TRUE);
+
+    glDepthMask(GL_TRUE); // restaurar depth
 }
 
+// ================= DESTRUCTOR =================
 Skybox::~Skybox()
 {
     glDeleteVertexArrays(1, &vao_id);
     glDeleteBuffers(1, &vbo_id);
-}
-
-GLuint Skybox::compile_shaders()
-{
-    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vs, 1, &vertex_shader_code, nullptr);
-    glShaderSource(fs, 1, &fragment_shader_code, nullptr);
-
-    glCompileShader(vs);
-    glCompileShader(fs);
-
-    GLint success;
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-    if (!success) { std::cerr << "Error compilando vertex shader\n"; }
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-    if (!success) { std::cerr << "Error compilando fragment shader\n"; }
-
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-    return program;
 }

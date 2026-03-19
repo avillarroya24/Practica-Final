@@ -8,10 +8,7 @@ class Node
 public:
     Transform transform;
 
-    void set_parent(Node& node)
-    {
-        transform.parent = &node.transform;
-    }
+    void set_parent(Node& node);
 };
 
 #endif

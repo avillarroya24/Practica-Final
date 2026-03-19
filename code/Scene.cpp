@@ -1,139 +1,151 @@
-﻿#pragma once
-
-#include "Scene.hpp"
+﻿#include "Scene.hpp"
 
 #include <iostream>
 #include <cassert>
 
-#include <glm.hpp>                          // vec3, vec4, ivec4, mat4
-#include <gtc/matrix_transform.hpp>         // translate, rotate, scale, perspective
-#include <gtc/type_ptr.hpp>                 // value_ptr
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 
 namespace udit
 {
-
     using namespace std;
 
+    // ================= SHADERS NORMALES =================
     const string Scene::vertex_shader_code =
-
         "#version 330\n"
-        ""
         "uniform mat4 model_view_matrix;"
         "uniform mat4 projection_matrix;"
-        ""
         "layout (location = 0) in vec3 vertex_coordinates;"
         "layout (location = 1) in vec3 vertex_color;"
-        ""
         "out vec3 front_color;"
-        ""
-        "void main()"
-        "{"
+        "void main(){"
         "   gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
         "   front_color = vertex_color;"
         "}";
 
     const string Scene::fragment_shader_code =
-
         "#version 330\n"
-        ""
-        "in  vec3    front_color;"
+        "in vec3 front_color;"
         "out vec4 fragment_color;"
-        ""
-        "void main()"
-        "{"
+        "void main(){"
         "    fragment_color = vec4(front_color, 1.0);"
         "}";
 
-    Scene::Scene(unsigned width, unsigned height)
-        :
-        angle(0)
+    // ================= CONSTRUCTOR =================
+    Scene::Scene(unsigned width, unsigned height) : angle(0)
     {
-        // Se establece la configuración básica:
-
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glClearColor(.2f, .2f, .2f, 1.f);
+        glClearColor(0.05f, 0.05f, 0.2f, 1.0f);
 
-        // Se compilan y se activan los shaders:
-
-        GLuint program_id = compile_shaders();
-
+        program_id = compile_shaders();
         glUseProgram(program_id);
 
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
         resize(width, height);
+
+        // ===== SKYBOX =====
+        std::shared_ptr<Shader_Program> skybox_shader =
+            std::make_shared<Shader_Program>(
+                Skybox::vertex_shader_code,
+                Skybox::fragment_shader_code
+            );
+
+        skybox = std::make_shared<Skybox>("skybox", skybox_shader);
     }
 
+    // ================= UPDATE =================
     void Scene::update()
     {
         angle += 0.01f;
-        const float separacion = 3.0f;
-
     }
 
+    // ================= RENDER =================
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // --- Cubo grande (ahora más pequeño) ---
-        glm::mat4 model_view_matrix = glm::mat4(1.0f); // identidad
-        model_view_matrix = glm::translate(model_view_matrix, glm::vec3(0.f, 0.f, -6.f)); // centrado
-        model_view_matrix = glm::rotate(model_view_matrix, angle, glm::vec3(0.f, 1.f, 0.f)); // gira sobre sí mismo
-        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.5f, 1.5f, 1.5f)); // un poco más pequeño
+        glUseProgram(program_id);
 
+        // --- Cubo grande ---
+        glm::mat4 model_view_matrix = glm::mat4(1.0f);
+        model_view_matrix = glm::translate(model_view_matrix, glm::vec3(0.f, 0.f, -6.f));
+        model_view_matrix = glm::rotate(model_view_matrix, angle, glm::vec3(0.f, 1.f, 0.f));
+        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.5f, 1.5f, 1.5f));
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view_matrix));
+
+        // Generar color dinámico según ángulo
+        glm::vec3 dynamic_color_big(
+            0.5f + 0.5f * sin(angle),
+            0.5f + 0.5f * cos(angle),
+            0.5f + 0.5f * sin(angle * 0.5f)
+        );
+        cube.set_color(dynamic_color_big); // <- tu Cube.hpp debe permitir set_color(glm::vec3)
         cube.render();
 
-        // --- Cubo pequeño orbitando alrededor del cubo central ---
-        glm::mat4 small_cube = glm::mat4(1.0f); // identidad
-        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f)); // misma base que el cubo grande
-        small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f)); // orbita alrededor del cubo grande
-        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f)); // distancia radial desde el cubo grande
-        small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f)); // gira sobre sí mismo
-        small_cube = glm::scale(small_cube, glm::vec3(0.5f, 0.5f, 0.5f)); // más pequeño
-
+        // --- Cubo pequeño orbitando ---
+        glm::mat4 small_cube = glm::mat4(1.0f);
+        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
+        small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
+        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
+        small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f));
+        small_cube = glm::scale(small_cube, glm::vec3(0.5f, 0.5f, 0.5f));
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
+
+        glm::vec3 dynamic_color_small(
+            0.5f + 0.5f * cos(angle * 1.5f),
+            0.5f + 0.5f * sin(angle * 0.7f),
+            0.5f + 0.5f * cos(angle * 2.0f)
+        );
+        cube.set_color(dynamic_color_small);
         cube.render();
+
+        glm::vec3 color_factor = glm::vec3(
+            (sin(angle) + 1.0f) / 2.0f,
+            (cos(angle * 1.5f) + 1.0f) / 2.0f,
+            (sin(angle * 0.7f) + 1.0f) / 2.0f
+        );
+        cube.set_color(color_factor);
+
+        // ===== SKYBOX =====
+        glDepthFunc(GL_LEQUAL);
+
+        glm::mat4 view = glm::mat4(glm::mat3(glm::mat4(1.0f))); // eliminar traslación
+        glm::mat4 projection = glm::perspective(glm::radians(60.f), 1.0f, 0.1f, 100.f);
+        skybox->render(glm::value_ptr(view), glm::value_ptr(projection));
+
+        glDepthFunc(GL_LESS);
     }
 
-
-
+    // ================= RESIZE =================
     void Scene::resize(unsigned width, unsigned height)
     {
         glm::mat4 projection_matrix = glm::perspective(20.f, GLfloat(width) / height, 1.f, 5000.f);
-
         glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-
         glViewport(0, 0, width, height);
     }
 
+    // ================= COMPILAR SHADERS =================
     GLuint Scene::compile_shaders()
     {
         GLint succeeded = GL_FALSE;
 
-        // Se crean objetos para los shaders:
-
-        GLuint   vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+        GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
         GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
-
-        // Se carga el código de los shaders:
 
         const char* vertex_shaders_code[] = { vertex_shader_code.c_str() };
         const char* fragment_shaders_code[] = { fragment_shader_code.c_str() };
-        const GLint    vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
-        const GLint  fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
+        const GLint vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
+        const GLint fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
 
         glShaderSource(vertex_shader_id, 1, vertex_shaders_code, vertex_shaders_size);
         glShaderSource(fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
 
-        // Se compilan los shaders:
-
         glCompileShader(vertex_shader_id);
         glCompileShader(fragment_shader_id);
-
-        // Se comprueba que si la compilación ha tenido éxito:
 
         glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
         if (!succeeded) show_compilation_error(vertex_shader_id);
@@ -141,70 +153,40 @@ namespace udit
         glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
         if (!succeeded) show_compilation_error(fragment_shader_id);
 
-        // Se crea un objeto para un programa:
-
         GLuint program_id = glCreateProgram();
-
-        // Se cargan los shaders compilados en el programa:
-
         glAttachShader(program_id, vertex_shader_id);
         glAttachShader(program_id, fragment_shader_id);
-
-        // Se linkan los shaders:
-
         glLinkProgram(program_id);
-
-        // Se comprueba si el linkage ha tenido éxito:
 
         glGetProgramiv(program_id, GL_LINK_STATUS, &succeeded);
         if (!succeeded) show_linkage_error(program_id);
 
-        // Se liberan los shaders compilados una vez se han linkado:
-
         glDeleteShader(vertex_shader_id);
         glDeleteShader(fragment_shader_id);
 
-        return (program_id);
+        return program_id;
     }
 
     void Scene::show_compilation_error(GLuint shader_id)
     {
         string info_log;
-        GLint  info_log_length;
+        GLint info_log_length;
 
         glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-
         info_log.resize(info_log_length);
-
         glGetShaderInfoLog(shader_id, info_log_length, NULL, &info_log.front());
-
         cerr << info_log.c_str() << endl;
-
-#ifdef _MSC_VER
-        //OutputDebugStringA (info_log.c_str ());
-#endif
-
         assert(false);
     }
 
     void Scene::show_linkage_error(GLuint program_id)
     {
         string info_log;
-        GLint  info_log_length;
-
+        GLint info_log_length;
         glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
-
         info_log.resize(info_log_length);
-
         glGetProgramInfoLog(program_id, info_log_length, NULL, &info_log.front());
-
         cerr << info_log.c_str() << endl;
-
-#ifdef _MSC_VER
-        //OutputDebugStringA (info_log.c_str ());
-#endif
-
         assert(false);
     }
-
 }
