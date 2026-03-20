@@ -1,37 +1,31 @@
-#ifndef SKYBOX_HEADER
-#define SKYBOX_HEADER
+#ifndef SKYBOX_HPP
+#define SKYBOX_HPP
 
 #include <string>
-#include <memory>
 #include <glad/gl.h>
-#include "Texture_Cube.hpp"
-#include "Shader_Program.hpp"
-#include "Material.hpp"
+#include <glm.hpp>
 
 class Skybox
 {
 private:
-    GLuint vao_id = 0;
-    GLuint vbo_id = 0;
+    GLuint vao_id;
+    GLuint vbo_id;
+    GLuint cubemap_texture;
 
-    Material material;
+    static const GLfloat coordinates[108]; // 36 vértices * 3 componentes
 
-    GLuint model_view_id = 0;
-    GLuint projection_id = 0;
-
-    udit::Texture_Cube cubemap;
-
-    static const GLfloat coordinates[];
+    GLuint loadCubemap(const std::string& base_path);
 
 public:
-    // solo una declaración de shaders estáticos
+    Skybox(const std::string& texture_base_path);
+    ~Skybox();
+
+    void render(const glm::mat4& view,
+        const glm::mat4& projection,
+        GLuint shader);
+
     static const char* vertex_shader_code;
     static const char* fragment_shader_code;
-
-    Skybox(const std::string& texture_base_path, std::shared_ptr<Shader_Program> shader);
-    void render(const float* view_matrix, const float* projection_matrix);
-
-    ~Skybox();
 };
 
 #endif

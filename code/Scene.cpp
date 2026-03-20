@@ -39,7 +39,26 @@ namespace udit
         // Configuración de OpenGL
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glClearColor(0.05f, 0.05f, 0.2f, 1.0f);
+        glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
+        // Control del degradado (0 = más oscuro, 1 = más claro)
+        float t = 0.09f; // súbelo para aclarar, bájalo para oscurecer
+
+        // Azul cielo MUY claro (parte superior)
+        glm::vec3 top = glm::vec3(0.65f, 0.90f, 1.0f);
+
+        // Azul cielo más oscuro (parte inferior)
+        glm::vec3 bottom = glm::vec3(0.20f, 0.45f, 0.75f);
+
+        // Mezcla de colores (degradado)
+        glm::vec3 color = glm::mix(bottom, top, t);
+
+        // Aplica el color al fondo
+        glClearColor(color.r, color.g, color.b, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
+
 
         // Compila y activa los shaders principales de la escena
         program_id = compile_shaders();
@@ -58,12 +77,6 @@ namespace udit
                 Skybox::vertex_shader_code,
                 Skybox::fragment_shader_code
             );
-
-        // Inicializa el skybox con el shader y la ruta de texturas
-        skybox = std::make_shared<Skybox>(
-            "../../shared/assets/sky-cube-map-", // Ruta base de las texturas
-            skybox_shader
-        );
     }
 
     // ================= UPDATE =================
@@ -76,6 +89,8 @@ namespace udit
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
 
         glUseProgram(program_id);
 
@@ -118,15 +133,6 @@ namespace udit
             (sin(angle * 0.7f) + 1.0f) / 2.0f
         );
         cube.set_color(color_factor);
-
-        // ===== SKYBOX =====
-        glDepthFunc(GL_LEQUAL);
-
-        glm::mat4 view = glm::mat4(glm::mat3(glm::mat4(1.0f))); // eliminar traslación
-        glm::mat4 projection = glm::perspective(glm::radians(60.f), 1.0f, 0.1f, 100.f);
-        skybox->render(glm::value_ptr(view), glm::value_ptr(projection));
-
-        glDepthFunc(GL_LESS);
     }
 
     // ================= RESIZE =================
