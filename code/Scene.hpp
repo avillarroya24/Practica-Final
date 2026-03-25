@@ -3,6 +3,8 @@
 #include "Cube.hpp"
 #include "Skybox.hpp"
 #include "Shader_Program.hpp"
+#include "Terrain.hpp"
+
 
 #include <memory>
 #include <string>
@@ -20,6 +22,8 @@ namespace udit
 
         Cube cube;
         float angle;
+
+        Terrain terrain;
 
         std::shared_ptr<Skybox> skybox;
 

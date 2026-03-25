@@ -11,72 +11,51 @@ namespace udit
 {
     using namespace std;
 
-    // ================= SHADERS NORMALES =================
+    // ================= SHADERS =================
     const string Scene::vertex_shader_code =
-        "#version 330\n"
+        "#version 330 core\n"
         "uniform mat4 model_view_matrix;"
         "uniform mat4 projection_matrix;"
-        "layout (location = 0) in vec3 vertex_coordinates;"
-        "layout (location = 1) in vec3 vertex_color;"
-        "out vec3 front_color;"
-        "void main(){"
-        "   gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates, 1.0);"
-        "   front_color = vertex_color;"
+        "layout(location = 0) in vec3 vertex_coordinates;"
+        "layout(location = 1) in vec3 vertex_normal;"
+        "out vec3 frag_color;"
+        "void main() {"
+        "   gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates,1.0);"
+        "   frag_color = normalize(vertex_normal) * 0.5 + 0.5;" // normales como color
         "}";
 
     const string Scene::fragment_shader_code =
-        "#version 330\n"
-        "in vec3 front_color;"
+        "#version 330 core\n"
+        "in vec3 frag_color;"
         "out vec4 fragment_color;"
-        "void main(){"
-        "    fragment_color = vec4(front_color, 1.0);"
+        "void main() {"
+        "   fragment_color = vec4(frag_color, 1.0);"
         "}";
 
     // ================= CONSTRUCTOR =================
     Scene::Scene(unsigned width, unsigned height)
-        : angle(0)
+        : angle(0), terrain(200, 200, 1.0f)  // Inicializamos el terreno
     {
-        // Configuración de OpenGL
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
-        // Control del degradado (0 = más oscuro, 1 = más claro)
-        float t = 0.09f; // súbelo para aclarar, bájalo para oscurecer
 
-        // Azul cielo MUY claro (parte superior)
+        // Color de fondo
         glm::vec3 top = glm::vec3(0.65f, 0.90f, 1.0f);
-
-        // Azul cielo más oscuro (parte inferior)
         glm::vec3 bottom = glm::vec3(0.20f, 0.45f, 0.75f);
-
-        // Mezcla de colores (degradado)
+        float t = 0.09f;
         glm::vec3 color = glm::mix(bottom, top, t);
-
-        // Aplica el color al fondo
         glClearColor(color.r, color.g, color.b, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
-
-
-        // Compila y activa los shaders principales de la escena
+        // Compila los shaders
         program_id = compile_shaders();
         glUseProgram(program_id);
 
-        // Obtén las ubicaciones de las matrices de transformación
+        // Obtiene las ubicaciones de las matrices
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
-        // Configura tamaño de ventana y proyección
+        // Ajusta la ventana
         resize(width, height);
-
-        // ===== SKYBOX =====
-        std::shared_ptr<Shader_Program> skybox_shader =
-            std::make_shared<Shader_Program>(
-                Skybox::vertex_shader_code,
-                Skybox::fragment_shader_code
-            );
     }
 
     // ================= UPDATE =================
@@ -89,119 +68,90 @@ namespace udit
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-
         glUseProgram(program_id);
+
+        // --- Terreno ---
+        glm::mat4 terrain_matrix = glm::mat4(1.0f);
+        terrain_matrix = glm::translate(terrain_matrix, glm::vec3(-100.f, -5.f, -200.f)); // mover al centro de la escena
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(terrain_matrix));
+        terrain.Draw();
 
         // --- Cubo grande ---
         glm::mat4 model_view_matrix = glm::mat4(1.0f);
         model_view_matrix = glm::translate(model_view_matrix, glm::vec3(0.f, 0.f, -6.f));
         model_view_matrix = glm::rotate(model_view_matrix, angle, glm::vec3(0.f, 1.f, 0.f));
-        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.5f, 1.5f, 1.5f));
+        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.5f));
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view_matrix));
 
-        // Generar color dinámico según ángulo
-        glm::vec3 dynamic_color_big(
-            0.5f + 0.5f * sin(angle),
+        glm::vec3 dynamic_color_big(0.5f + 0.5f * sin(angle),
             0.5f + 0.5f * cos(angle),
-            0.5f + 0.5f * sin(angle * 0.5f)
-        );
-        cube.set_color(dynamic_color_big); // <- tu Cube.hpp debe permitir set_color(glm::vec3)
+            0.5f + 0.5f * sin(angle * 0.5f));
+        cube.set_color(dynamic_color_big);
         cube.render();
-
-        // --- Cubo pequeño orbitando ---
-        glm::mat4 small_cube = glm::mat4(1.0f);
-        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
-        small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
-        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
-        small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f));
-        small_cube = glm::scale(small_cube, glm::vec3(0.5f, 0.5f, 0.5f));
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
-
-        glm::vec3 dynamic_color_small(
-            0.5f + 0.5f * cos(angle * 1.5f),
-            0.5f + 0.5f * sin(angle * 0.7f),
-            0.5f + 0.5f * cos(angle * 2.0f)
-        );
-        cube.set_color(dynamic_color_small);
-        cube.render();
-
-        glm::vec3 color_factor = glm::vec3(
-            (sin(angle) + 1.0f) / 2.0f,
-            (cos(angle * 1.5f) + 1.0f) / 2.0f,
-            (sin(angle * 0.7f) + 1.0f) / 2.0f
-        );
-        cube.set_color(color_factor);
     }
 
     // ================= RESIZE =================
     void Scene::resize(unsigned width, unsigned height)
     {
-        glm::mat4 projection_matrix = glm::perspective(20.f, GLfloat(width) / height, 1.f, 5000.f);
+        glm::mat4 projection_matrix = glm::perspective(glm::radians(45.f), GLfloat(width) / height, 1.f, 5000.f);
         glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
         glViewport(0, 0, width, height);
     }
 
-    // ================= COMPILAR SHADERS =================
+    // ================= SHADER HELPERS =================
     GLuint Scene::compile_shaders()
     {
-        GLint succeeded = GL_FALSE;
+        GLint success = GL_FALSE;
 
-        GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
-        GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+        GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-        const char* vertex_shaders_code[] = { vertex_shader_code.c_str() };
-        const char* fragment_shaders_code[] = { fragment_shader_code.c_str() };
-        const GLint vertex_shaders_size[] = { (GLint)vertex_shader_code.size() };
-        const GLint fragment_shaders_size[] = { (GLint)fragment_shader_code.size() };
+        const char* v_code = vertex_shader_code.c_str();
+        const char* f_code = fragment_shader_code.c_str();
 
-        glShaderSource(vertex_shader_id, 1, vertex_shaders_code, vertex_shaders_size);
-        glShaderSource(fragment_shader_id, 1, fragment_shaders_code, fragment_shaders_size);
+        glShaderSource(vertex_shader, 1, &v_code, nullptr);
+        glShaderSource(fragment_shader, 1, &f_code, nullptr);
 
-        glCompileShader(vertex_shader_id);
-        glCompileShader(fragment_shader_id);
+        glCompileShader(vertex_shader);
+        glCompileShader(fragment_shader);
 
-        glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error(vertex_shader_id);
+        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+        if (!success) show_compilation_error(vertex_shader);
 
-        glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &succeeded);
-        if (!succeeded) show_compilation_error(fragment_shader_id);
+        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+        if (!success) show_compilation_error(fragment_shader);
 
-        GLuint program_id = glCreateProgram();
-        glAttachShader(program_id, vertex_shader_id);
-        glAttachShader(program_id, fragment_shader_id);
-        glLinkProgram(program_id);
+        GLuint prog = glCreateProgram();
+        glAttachShader(prog, vertex_shader);
+        glAttachShader(prog, fragment_shader);
+        glLinkProgram(prog);
 
-        glGetProgramiv(program_id, GL_LINK_STATUS, &succeeded);
-        if (!succeeded) show_linkage_error(program_id);
+        glGetProgramiv(prog, GL_LINK_STATUS, &success);
+        if (!success) show_linkage_error(prog);
 
-        glDeleteShader(vertex_shader_id);
-        glDeleteShader(fragment_shader_id);
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
 
-        return program_id;
+        return prog;
     }
 
     void Scene::show_compilation_error(GLuint shader_id)
     {
-        string info_log;
-        GLint info_log_length;
-
-        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-        info_log.resize(info_log_length);
-        glGetShaderInfoLog(shader_id, info_log_length, NULL, &info_log.front());
-        cerr << info_log.c_str() << endl;
+        GLint logLength;
+        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &logLength);
+        std::string log(logLength, ' ');
+        glGetShaderInfoLog(shader_id, logLength, nullptr, &log[0]);
+        std::cerr << log << std::endl;
         assert(false);
     }
 
     void Scene::show_linkage_error(GLuint program_id)
     {
-        string info_log;
-        GLint info_log_length;
-        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
-        info_log.resize(info_log_length);
-        glGetProgramInfoLog(program_id, info_log_length, NULL, &info_log.front());
-        cerr << info_log.c_str() << endl;
+        GLint logLength;
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &logLength);
+        std::string log(logLength, ' ');
+        glGetProgramInfoLog(program_id, logLength, nullptr, &log[0]);
+        std::cerr << log << std::endl;
         assert(false);
     }
 }
