@@ -1,6 +1,7 @@
 #include "Terrain.hpp"
 #include <cmath>
 #include <iostream>
+#include <random>
 
 Terrain::Terrain(int width, int height, float scale)
     : m_width(width), m_height(height), m_scale(scale)
@@ -25,16 +26,21 @@ void Terrain::Draw() const
     glBindVertexArray(0);
 }
 
-// Genera alturas de ejemplo (sen/cos)
+// Genera alturas mas altas y con un poco de ruido
 void Terrain::GenerateHeightmap()
 {
     m_heights.resize(m_width * m_height);
+
+    // Generador de ruido aleatorio pequeño
+    std::mt19937 rng(42); // semilla fija
+    std::uniform_real_distribution<float> noise(-0.2f, 0.2f);
 
     for (int z = 0; z < m_height; ++z)
     {
         for (int x = 0; x < m_width; ++x)
         {
-            float height = std::sin(x * 0.1f) * std::cos(z * 0.1f) * m_scale;
+            // Elevación mas marcada
+            float height = (std::sin(x * 0.1f) * std::cos(z * 0.2f) * 7.0f + noise(rng)) * m_scale;
             m_heights[z * m_width + x] = height;
         }
     }
@@ -57,7 +63,7 @@ glm::vec3 Terrain::CalculateNormal(int x, int z) const
     return glm::normalize(normal);
 }
 
-// Construye vértices e índices
+// Construye vertices e indices
 void Terrain::BuildMesh()
 {
     m_vertices.clear();

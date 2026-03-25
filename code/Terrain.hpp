@@ -4,7 +4,7 @@
 #include <glm.hpp>
 #include <glad/gl.h>
 
-// ----- Estructura de un vértice -----
+// ----- Estructura de un vertice -----
 struct Vertex
 {
     glm::vec3 position;

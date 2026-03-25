@@ -22,6 +22,8 @@ const GLfloat Skybox::coordinates[] = {
 };
 
 // ================= SHADERS =================
+
+// Skybox - vertex shader
 const char* Skybox::vertex_shader_code =
 "#version 330 core\n"
 "layout(location = 0) in vec3 vertex_coordinates;\n"
@@ -35,6 +37,7 @@ const char* Skybox::vertex_shader_code =
 "    gl_Position = pos.xyww;\n"
 "}";
 
+// Skybox - fragment shader
 const char* Skybox::fragment_shader_code =
 "#version 330 core\n"
 "in vec3 tex_coords;\n"
@@ -42,20 +45,23 @@ const char* Skybox::fragment_shader_code =
 "\n"
 "void main()\n"
 "{\n"
-"    // Dirección normalizada del cubo\n"
 "    vec3 dir = normalize(tex_coords);\n"
 "\n"
 "    // Altura del cielo (0 = horizonte, 1 = zenit)\n"
 "    float h = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);\n"
 "\n"
-"    // Azul oscuro del horizonte\n"
-"    vec3 horizon = vec3(0.02, 0.05, 0.10);\n"
+"    // Azul del horizonte con un toque cálido (simula luz solar)\n"
+"    vec3 horizon = vec3(0.25, 0.45, 0.60);\n"
 "\n"
-"    // Azul profundo del cielo superior\n"
-"    vec3 zenith = vec3(0.00, 0.02, 0.06);\n"
+"    // Azul profundo del zenit\n"
+"    vec3 zenith = vec3(0.05, 0.15, 0.35);\n"
 "\n"
-"    // Mezcla suave según la altura\n"
-"    vec3 color = mix(horizon, zenith, h);\n"
+"    // Mezcla suave con curva exponencial para simular atmósfera\n"
+"    float blend = pow(h, 1.5);\n"
+"    vec3 color = mix(horizon, zenith, blend);\n"
+"\n"
+"    // Añade un ligero brillo cálido cercano al horizonte\n"
+"    color += vec3(0.02, 0.02, 0.05) * (1.0 - h);\n"
 "\n"
 "    FragColor = vec4(color, 1.0);\n"
 "}";
@@ -110,7 +116,7 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
         }
         else
         {
-            std::cout << "❌ Error cargando: " << faces[i] << std::endl;
+            std::cout << " Error cargando: " << faces[i] << std::endl;
         }
     }
 

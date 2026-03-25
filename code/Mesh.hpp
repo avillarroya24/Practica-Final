@@ -8,9 +8,9 @@ class Mesh
 protected:
     GLuint vao_id = 0;
     GLuint vbo_id = 0;
-    GLuint ebo_id = 0; // Añadido para índices
+    GLuint ebo_id = 0; // Añadido para indices
 
-    GLsizei index_count = 0; // Número de índices para DrawElements
+    GLsizei index_count = 0; // Número de indices para DrawElements
 
 public:
     virtual ~Mesh()
