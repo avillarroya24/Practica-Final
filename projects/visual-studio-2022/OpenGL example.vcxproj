@@ -21,6 +21,7 @@
     <ClInclude Include="..\..\code\Window.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Shader_Program.hpp" />
+    <ClInclude Include="Terrain.hpp" />
     <ClInclude Include="Texture_Cube.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -36,6 +37,7 @@
     <ClCompile Include="..\..\code\Texture_Cube.cpp" />
     <ClCompile Include="..\..\code\Tranform.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
