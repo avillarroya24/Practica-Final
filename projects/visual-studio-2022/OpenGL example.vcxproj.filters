@@ -48,7 +48,7 @@
     <ClInclude Include="..\..\code\Skybox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Terrain.hpp">
+    <ClInclude Include="..\..\code\Terrain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -89,7 +89,7 @@
     <ClCompile Include="..\..\code\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Terrain.cpp">
+    <ClCompile Include="..\..\code\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
