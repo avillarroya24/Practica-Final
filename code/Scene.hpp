@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 
 #include "Cube.hpp"
 #include "Skybox.hpp"
 #include "Shader_Program.hpp"
 #include "Terrain.hpp"
-
+#include "Camera.hpp"
 
 #include <memory>
 #include <string>
@@ -25,6 +25,8 @@ namespace udit
 
         Terrain terrain;
 
+        Camera camera;
+
         std::shared_ptr<Skybox> skybox;
 
         GLuint compile_shaders();
@@ -36,6 +38,12 @@ namespace udit
         void update();
         void render();
         void resize(unsigned width, unsigned height);
+
+        void moveForward(float dt);
+        void moveBackward(float dt);
+        void moveLeft(float dt);
+        void moveRight(float dt);
+        void rotateCamera(float dx, float dy);
 
         GLuint program_id;
     };

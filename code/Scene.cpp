@@ -113,7 +113,31 @@ const string Scene::fragment_shader_code =
         cube.set_color(dynamic_color_small);
         cube.render();
 
+
+        // ==================== VIEW MATRIX (CÁMARA) ====================
+        glm::vec3 cameraPos(camera.getX(), camera.getY(), camera.getZ());
+
+        // Dirección (a dónde mira)
+        glm::vec3 direction;
+        direction.x = cos(camera.getRotY()) * cos(camera.getRotX());
+        direction.y = sin(camera.getRotX());
+        direction.z = sin(camera.getRotY()) * cos(camera.getRotX());
+
+        glm::vec3 cameraFront = glm::normalize(direction);
+        glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        // View matrix
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
     }
+
+    // ================= CONTROLES =================
+    void Scene::moveForward(float dt) { camera.moveForward(dt); }
+    void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
+    void Scene::moveLeft(float dt) { camera.moveLeft(dt); }
+    void Scene::moveRight(float dt) { camera.moveRight(dt); }
+    void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
+
 
     // ================= RESIZE =================
     void Scene::resize(unsigned width, unsigned height)
