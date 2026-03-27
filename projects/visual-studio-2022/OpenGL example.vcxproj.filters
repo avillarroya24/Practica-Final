@@ -51,7 +51,7 @@
     <ClInclude Include="..\..\code\Terrain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.hpp">
+    <ClInclude Include="..\..\code\Camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -95,7 +95,7 @@
     <ClCompile Include="..\..\code\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="..\..\code\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
