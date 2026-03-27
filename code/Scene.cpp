@@ -1,4 +1,5 @@
 ﻿#include "Scene.hpp"
+#include "Camera.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -101,6 +102,7 @@ const string Scene::fragment_shader_code =
         small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
         small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f)); // distancia desde el cubo grande
         small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f));
+        
         // Escala reducida del cubo pequeño
         small_cube = glm::scale(small_cube, glm::vec3(0.35f));
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
@@ -114,10 +116,10 @@ const string Scene::fragment_shader_code =
         cube.render();
 
 
-        // ==================== VIEW MATRIX (CÁMARA) ====================
+        // ==================== VIEW MATRIX (CAMARA) ====================
         glm::vec3 cameraPos(camera.getX(), camera.getY(), camera.getZ());
 
-        // Dirección (a dónde mira)
+        // Dirección (a donde mira)
         glm::vec3 direction;
         direction.x = cos(camera.getRotY()) * cos(camera.getRotX());
         direction.y = sin(camera.getRotX());

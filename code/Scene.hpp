@@ -39,10 +39,14 @@ namespace udit
         void render();
         void resize(unsigned width, unsigned height);
 
+        // Movimiento horizontal
         void moveForward(float dt);
         void moveBackward(float dt);
         void moveLeft(float dt);
         void moveRight(float dt);
+
+
+        // Rotación
         void rotateCamera(float dx, float dy);
 
         GLuint program_id;
