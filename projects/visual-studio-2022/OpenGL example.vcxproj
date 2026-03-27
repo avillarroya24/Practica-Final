@@ -20,6 +20,7 @@
     <ClInclude Include="..\..\code\Terrain.hpp" />
     <ClInclude Include="..\..\code\Tranform.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
+    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Shader_Program.hpp" />
     <ClInclude Include="Texture_Cube.hpp" />
@@ -38,6 +39,7 @@
     <ClCompile Include="..\..\code\Texture_Cube.cpp" />
     <ClCompile Include="..\..\code\Tranform.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
+    <ClCompile Include="Camera.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
