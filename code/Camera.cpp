@@ -14,16 +14,18 @@ Camera::Camera() {
     sensitivity = 0.1f;
 }
 
-// Movimiento hacia delante
+// Movimiento hacia delante (DIRECCIÓN REAL DE LA CÁMARA)
 void Camera::moveForward(float deltaTime) {
-    posX += cos(rotY) * speed * deltaTime;
-    posZ += sin(rotY) * speed * deltaTime;
+    posX += cos(rotY) * cos(rotX) * speed * deltaTime;
+    posY += sin(rotX) * speed * deltaTime;
+    posZ += sin(rotY) * cos(rotX) * speed * deltaTime;
 }
 
 // Movimiento hacia atrás
 void Camera::moveBackward(float deltaTime) {
-    posX -= cos(rotY) * speed * deltaTime;
-    posZ -= sin(rotY) * speed * deltaTime;
+    posX -= cos(rotY) * cos(rotX) * speed * deltaTime;
+    posY -= sin(rotX) * speed * deltaTime;
+    posZ -= sin(rotY) * cos(rotX) * speed * deltaTime;
 }
 
 // Movimiento izquierda
