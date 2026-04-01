@@ -2,6 +2,7 @@
 #define NODE_HPP
 
 #include "Tranform.hpp"
+#include "Light.hpp"
 
 class Node
 {
