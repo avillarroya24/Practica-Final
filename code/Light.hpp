@@ -1,11 +1,9 @@
 #pragma once
-
-#include "Node.hpp"
 #include <glm.hpp>
 #include <string>
 #include <glad/gl.h>
 
-class Light : public Node
+class Light
 {
 public:
     enum LightType

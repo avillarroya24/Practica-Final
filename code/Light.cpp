@@ -1,4 +1,6 @@
 #include "Light.hpp"
+#include <glm.hpp>
+#include <glad/gl.h>
 
 // ================= CONSTRUCTOR =================
 Light::Light(LightType t)

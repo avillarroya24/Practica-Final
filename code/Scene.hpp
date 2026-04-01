@@ -5,6 +5,7 @@
 #include "Shader_Program.hpp"
 #include "Terrain.hpp"
 #include "Camera.hpp"
+#include "Light.hpp"
 
 #include <memory>
 #include <string>
@@ -26,6 +27,8 @@ namespace udit
         Terrain terrain;
 
         Camera camera;
+
+        Light light;
 
         std::shared_ptr<Skybox> skybox;
 
