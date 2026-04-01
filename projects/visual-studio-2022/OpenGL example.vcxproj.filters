@@ -54,7 +54,7 @@
     <ClInclude Include="..\..\code\Camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Light.hpp">
+    <ClInclude Include="..\..\code\Light.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -101,7 +101,7 @@
     <ClCompile Include="..\..\code\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Light.cpp">
+    <ClCompile Include="..\..\code\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

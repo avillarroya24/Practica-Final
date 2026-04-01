@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\code\Camera.hpp" />
     <ClInclude Include="..\..\code\Cube.hpp" />
+    <ClInclude Include="..\..\code\Light.hpp" />
     <ClInclude Include="..\..\code\Mesh.hpp" />
     <ClInclude Include="..\..\code\Model.hpp" />
     <ClInclude Include="..\..\code\Node.hpp" />
@@ -21,7 +22,6 @@
     <ClInclude Include="..\..\code\Terrain.hpp" />
     <ClInclude Include="..\..\code\Tranform.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
-    <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Shader_Program.hpp" />
     <ClInclude Include="Texture_Cube.hpp" />
@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\code\Camera.cpp" />
     <ClCompile Include="..\..\code\Cube.cpp" />
+    <ClCompile Include="..\..\code\Light.cpp" />
     <ClCompile Include="..\..\code\main.cpp" />
     <ClCompile Include="..\..\code\Material.cpp" />
     <ClCompile Include="..\..\code\Mesh.cpp" />
@@ -41,7 +42,6 @@
     <ClCompile Include="..\..\code\Texture_Cube.cpp" />
     <ClCompile Include="..\..\code\Tranform.cpp" />
     <ClCompile Include="..\..\code\Window.cpp" />
-    <ClCompile Include="Light.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
