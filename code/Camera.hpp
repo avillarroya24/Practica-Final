@@ -9,14 +9,15 @@ private:
     float sensitivity;          // Sensibilidad del ratón
 
 public:
-    // Constructor
     Camera();
 
-    // Movimiento
+    // Movimiento estilo dron
     void moveForward(float deltaTime);
     void moveBackward(float deltaTime);
     void moveLeft(float deltaTime);
     void moveRight(float deltaTime);
+    void moveUp(float deltaTime);
+    void moveDown(float deltaTime);
 
     // Rotación
     void rotate(float deltaX, float deltaY);

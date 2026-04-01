@@ -47,10 +47,10 @@ namespace udit
         void moveBackward(float dt);
         void moveLeft(float dt);
         void moveRight(float dt);
-
-
-        // Rotación
+        void moveUp(float dt);       // Q o Space
+        void moveDown(float dt);   // E o Ctrl
         void rotateCamera(float dx, float dy);
+
 
         GLuint program_id;
     };

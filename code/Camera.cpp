@@ -1,63 +1,53 @@
 #include "Camera.hpp"
 #include <cmath>
 
-// Constructor
 Camera::Camera() {
     posX = 0.0f;
-    posY = 0.0f;
-    posZ = 0.0f;
+    posY = 2.0f; // altura inicial
+    posZ = 5.0f;
 
     rotX = 0.0f;
-    rotY = 0.0f;
+    rotY = 3.14f; // mirar hacia Z negativa por defecto
 
     speed = 5.0f;
-    sensitivity = 0.1f;
+    sensitivity = 0.002f; // más suave para mouse
 }
 
-// Movimiento hacia delante (DIRECCIÓN REAL DE LA CÁMARA)
+// Movimiento horizontal (XZ)
 void Camera::moveForward(float deltaTime) {
-    posX += cos(rotY) * cos(rotX) * speed * deltaTime;
-    posY += sin(rotX) * speed * deltaTime;
-    posZ += sin(rotY) * cos(rotX) * speed * deltaTime;
+    posX += cos(rotY) * speed * deltaTime;
+    posZ += sin(rotY) * speed * deltaTime;
 }
-
-// Movimiento hacia atrás
 void Camera::moveBackward(float deltaTime) {
-    posX -= cos(rotY) * cos(rotX) * speed * deltaTime;
-    posY -= sin(rotX) * speed * deltaTime;
-    posZ -= sin(rotY) * cos(rotX) * speed * deltaTime;
+    posX -= cos(rotY) * speed * deltaTime;
+    posZ -= sin(rotY) * speed * deltaTime;
 }
-
-// Movimiento izquierda
 void Camera::moveLeft(float deltaTime) {
     posX += sin(rotY) * speed * deltaTime;
     posZ -= cos(rotY) * speed * deltaTime;
 }
-
-// Movimiento derecha
 void Camera::moveRight(float deltaTime) {
     posX -= sin(rotY) * speed * deltaTime;
     posZ += cos(rotY) * speed * deltaTime;
 }
+
+// Movimiento vertical
+void Camera::moveUp(float deltaTime) { posY += speed * deltaTime; }
+void Camera::moveDown(float deltaTime) { posY -= speed * deltaTime; }
 
 // Rotación con ratón
 void Camera::rotate(float deltaX, float deltaY) {
     rotY += deltaX * sensitivity;
     rotX += deltaY * sensitivity;
 
-    // Limitar rotación vertical
+    // Limitar pitch
     if (rotX > 1.5f) rotX = 1.5f;
     if (rotX < -1.5f) rotX = -1.5f;
 }
 
 // Setters
-void Camera::setSpeed(float s) {
-    speed = s;
-}
-
-void Camera::setSensitivity(float s) {
-    sensitivity = s;
-}
+void Camera::setSpeed(float s) { speed = s; }
+void Camera::setSensitivity(float s) { sensitivity = s; }
 
 // Getters
 float Camera::getX() const { return posX; }

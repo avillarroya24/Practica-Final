@@ -1,5 +1,6 @@
 ﻿#include "Scene.hpp"
 #include "Camera.hpp"
+#include "Light.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -19,21 +20,61 @@ namespace udit
         "uniform mat4 projection_matrix;\n"
         "layout(location = 0) in vec3 vertex_coordinates;\n"
         "layout(location = 1) in vec3 vertex_normal;\n"
+
         "out vec3 frag_color;\n"
+        "out vec3 normal;\n"
+        "out vec3 frag_pos;\n"
+
         "void main() {\n"
-        "    gl_Position = projection_matrix * model_view_matrix * vec4(vertex_coordinates,1.0);\n"
+        "    vec4 world_pos = model_view_matrix * vec4(vertex_coordinates,1.0);\n"
+        "    gl_Position = projection_matrix * world_pos;\n"
+
+        "    normal = mat3(transpose(inverse(model_view_matrix))) * vertex_normal;\n"
+        "    frag_pos = vec3(world_pos);\n"
+
         "    vec3 n = normalize(vertex_normal);\n"
-        "    n = n * 0.5 + 0.3;\n"  // aumenta contraste y brillo metálico
+        "    n = n * 0.5 + 0.3;\n"
         "    frag_color = n;\n"
         "}";
 
     const string Scene::fragment_shader_code =
         "#version 330 core\n"
+
         "in vec3 frag_color;\n"
+        "in vec3 normal;\n"
+        "in vec3 frag_pos;\n"
+
         "out vec4 fragment_color;\n"
+
+        "uniform vec3 light_pos;\n"
+        "uniform vec3 view_pos;\n"
+
         "void main() {\n"
-        "    vec3 color = pow(frag_color, vec3(1.5));\n"  // acentúa los brillos
-        "    fragment_color = vec4(color, 0.4);\n"
+        "    vec3 norm = normalize(normal);\n"
+        "    vec3 light_dir = normalize(light_pos - frag_pos);\n"
+
+        // Ambient un poco más fuerte
+        "    float ambient_strength = 0.2;\n"
+        "    vec3 ambient = ambient_strength * frag_color;\n"
+
+        // Diffuse
+        "    float diff = max(dot(norm, light_dir), 0.0);\n"
+        "    vec3 diffuse = diff * frag_color;\n"
+
+        // Specular un poco más brillante
+        "    float specular_strength = 0.7;\n"
+        "    vec3 view_dir = normalize(view_pos - frag_pos);\n"
+        "    vec3 reflect_dir = reflect(-light_dir, norm);\n"
+        "    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
+        "    vec3 specular = specular_strength * spec * vec3(1.0);\n"
+
+        // Resultado final
+        "    vec3 result = ambient + diffuse + specular;\n"
+
+        // Suavizar el pow final para no oscurecer
+        "    result = pow(result, vec3(1.3));\n"
+
+        "    fragment_color = vec4(result, 0.4);\n"
         "}";
 
     // ================= CONSTRUCTOR =================
@@ -147,6 +188,8 @@ namespace udit
     void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
     void Scene::moveLeft(float dt) { camera.moveLeft(dt); }
     void Scene::moveRight(float dt) { camera.moveRight(dt); }
+    void Scene::moveUp(float dt) { camera.moveUp(dt); }       // Q o Space
+    void Scene::moveDown(float dt) { camera.moveDown(dt); }   // E o Ctrl
     void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
 
     // ================= RESIZE =================

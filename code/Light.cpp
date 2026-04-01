@@ -6,10 +6,15 @@
 Light::Light(LightType t)
     : type(t),
     position(0.0f, 5.0f, 0.0f),
-    direction(0.0f, -1.0f, 0.0f),
-    ambient(0.2f, 0.2f, 0.2f),
-    diffuse(0.8f, 0.8f, 0.8f),
-    specular(1.0f, 1.0f, 1.0f),
+
+    // Dirección tipo sol (más natural)
+    direction(glm::normalize(glm::vec3(-0.3f, -1.0f, -0.2f))),
+
+    // Luz más homogénea en toda la escena
+    ambient(0.35f, 0.35f, 0.35f),
+    diffuse(0.9f, 0.9f, 0.9f),
+    specular(0.6f, 0.6f, 0.6f),
+
     intensity(1.0f)
 {
 }
@@ -22,7 +27,8 @@ void Light::setPosition(const glm::vec3& pos)
 
 void Light::setDirection(const glm::vec3& dir)
 {
-    direction = dir;
+    // IMPORTANTE: siempre normalizada
+    direction = glm::normalize(dir);
 }
 
 void Light::setAmbient(const glm::vec3& a)
@@ -86,7 +92,17 @@ void Light::apply(GLuint program, int index)
 {
     std::string base = "lights[" + std::to_string(index) + "]";
 
-    glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &position[0]);
+    // Si es luz direccional no depende de posición
+    if (type == DIRECTIONAL)
+    {
+        glm::vec3 fakePos(0.0f, 0.0f, 0.0f);
+        glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &fakePos[0]);
+    }
+    else
+    {
+        glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &position[0]);
+    }
+
     glUniform3fv(glGetUniformLocation(program, (base + ".direction").c_str()), 1, &direction[0]);
 
     glUniform3fv(glGetUniformLocation(program, (base + ".ambient").c_str()), 1, &ambient[0]);
