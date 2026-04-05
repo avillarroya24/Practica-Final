@@ -172,25 +172,63 @@ namespace udit
         // ---------------- CAMERA VIEW ----------------
         glm::vec3 cameraPos(camera.getX(), camera.getY(), camera.getZ());
 
-        glm::vec3 direction;
-        direction.x = cos(camera.getRotY()) * cos(camera.getRotX());
-        direction.y = sin(camera.getRotX());
-        direction.z = sin(camera.getRotY()) * cos(camera.getRotX());
+        float dirX, dirY, dirZ;
+        camera.getDirection(dirX, dirY, dirZ);
 
-        glm::vec3 cameraFront = glm::normalize(direction);
+        glm::vec3 cameraFront = glm::normalize(glm::vec3(dirX, dirY, dirZ));
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     }
 
     // ================= CONTROLES =================
+
+ // Puedes dejar estos por si quieres combinar teclado + ratón
     void Scene::moveForward(float dt) { camera.moveForward(dt); }
     void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
     void Scene::moveLeft(float dt) { camera.moveLeft(dt); }
     void Scene::moveRight(float dt) { camera.moveRight(dt); }
-    void Scene::moveUp(float dt) { camera.moveUp(dt); }       // Q o Space
-    void Scene::moveDown(float dt) { camera.moveDown(dt); }   // E o Ctrl
-    void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
+    void Scene::moveUp(float dt) { camera.moveUp(dt); }
+    void Scene::moveDown(float dt) { camera.moveDown(dt); }
+
+    // Rotación directa (opcional)
+    void Scene::rotateCamera(float dx, float dy) {
+        camera.rotate(dx, dy);
+    }
+
+    // ================= RATÓN TOTAL (PRO) =================
+    void Scene::handleMouse(float dx, float dy, float dt)
+    {
+        // 1. ROTACIÓN SIEMPRE ACTIVA (mirar libre)
+        camera.rotate(dx, dy);
+
+        // 2. MOVIMIENTO SUAVE PROPORCIONAL
+        float movementForce = 0.01f;   // controla la velocidad general
+        float deadZone = 1.0f;         // evita micro-movimientos molestos
+
+        // ===== ADELANTE / ATRÁS =====
+        if (fabs(dy) > deadZone)
+        {
+            float amount = fabs(dy) * movementForce;
+
+            if (dy < 0)
+                camera.moveForward(dt * amount);
+            else
+                camera.moveBackward(dt * amount);
+        }
+
+        // ===== STRAFE IZQ / DER =====
+        if (fabs(dx) > deadZone)
+        {
+            float amount = fabs(dx) * movementForce;
+
+            if (dx > 0)
+                camera.moveRight(dt * amount);
+            else
+                camera.moveLeft(dt * amount);
+        }
+    }
+
 
     // ================= RESIZE =================
     void Scene::resize(unsigned width, unsigned height)

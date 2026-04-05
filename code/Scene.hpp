@@ -25,9 +25,7 @@ namespace udit
         float angle;
 
         Terrain terrain;
-
         Camera camera;
-
         Light light;
 
         std::shared_ptr<Skybox> skybox;
@@ -38,19 +36,26 @@ namespace udit
 
     public:
         Scene(unsigned width, unsigned height);
+
         void update();
         void render();
         void resize(unsigned width, unsigned height);
 
-        // Movimiento horizontal
+        // ================= INPUT =================
+
+        // (Opcional) Movimiento por teclado
         void moveForward(float dt);
         void moveBackward(float dt);
         void moveLeft(float dt);
         void moveRight(float dt);
-        void moveUp(float dt);       // Q o Space
-        void moveDown(float dt);   // E o Ctrl
+        void moveUp(float dt);
+        void moveDown(float dt);
+
+        // Rotación directa (opcional)
         void rotateCamera(float dx, float dy);
 
+        // NUEVO: control total con ratón
+        void handleMouse(float dx, float dy, float dt);
 
         GLuint program_id;
     };

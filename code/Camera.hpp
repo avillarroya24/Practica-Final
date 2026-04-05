@@ -3,15 +3,15 @@
 
 class Camera {
 private:
-    float posX, posY, posZ;     // Posición
-    float rotX, rotY;           // Rotación (pitch, yaw)
-    float speed;                // Velocidad de movimiento
-    float sensitivity;          // Sensibilidad del ratón
+    float posX, posY, posZ;   // Posición
+    float rotX, rotY;         // Pitch (X) y Yaw (Y)
+    float speed;              // Velocidad de movimiento
+    float sensitivity;        // Sensibilidad del ratón
 
 public:
     Camera();
 
-    // Movimiento estilo dron
+    // ================= MOVIMIENTO =================
     void moveForward(float deltaTime);
     void moveBackward(float deltaTime);
     void moveLeft(float deltaTime);
@@ -19,14 +19,20 @@ public:
     void moveUp(float deltaTime);
     void moveDown(float deltaTime);
 
-    // Rotación
+    // ================= ROTACIÓN =================
     void rotate(float deltaX, float deltaY);
 
-    // Setters
+    // ================= RATÓN COMPLETO =================
+    void handleMouse(float dx, float dy, float dt);
+
+    // ================= DIRECCIÓN =================
+    void getDirection(float& dirX, float& dirY, float& dirZ) const;
+
+    // ================= SETTERS =================
     void setSpeed(float s);
     void setSensitivity(float s);
 
-    // Getters
+    // ================= GETTERS =================
     float getX() const;
     float getY() const;
     float getZ() const;
