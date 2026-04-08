@@ -29,6 +29,7 @@ namespace udit
         Light light;
 
         std::shared_ptr<Skybox> skybox;
+        GLuint skybox_shader;
 
         GLuint compile_shaders();
         void show_compilation_error(GLuint shader_id);

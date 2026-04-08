@@ -1,8 +1,11 @@
 ﻿#include "Camera.hpp"
 #include <cmath>
 
-// Constructor
-Camera::Camera() {
+// =======================
+// CONSTRUCTOR
+// =======================
+Camera::Camera()
+{
     posX = 0.0f;
     posY = 2.0f;
     posZ = 5.0f;
@@ -15,18 +18,20 @@ Camera::Camera() {
 }
 
 // =======================
-// DIRECCIÓN DE LA CÁMARA
+// DIRECCIÓN
 // =======================
-void Camera::getDirection(float& dirX, float& dirY, float& dirZ) const {
+void Camera::getDirection(float& dirX, float& dirY, float& dirZ) const
+{
     dirX = cos(rotX) * cos(rotY);
     dirY = sin(rotX);
     dirZ = cos(rotX) * sin(rotY);
 }
 
 // =======================
-// MOVIMIENTO
+// MOVIMIENTO INDIVIDUAL
 // =======================
-void Camera::moveForward(float deltaTime) {
+void Camera::moveForward(float deltaTime)
+{
     float dirX, dirY, dirZ;
     getDirection(dirX, dirY, dirZ);
 
@@ -35,7 +40,8 @@ void Camera::moveForward(float deltaTime) {
     posZ += dirZ * speed * deltaTime;
 }
 
-void Camera::moveBackward(float deltaTime) {
+void Camera::moveBackward(float deltaTime)
+{
     float dirX, dirY, dirZ;
     getDirection(dirX, dirY, dirZ);
 
@@ -44,7 +50,8 @@ void Camera::moveBackward(float deltaTime) {
     posZ -= dirZ * speed * deltaTime;
 }
 
-void Camera::moveRight(float deltaTime) {
+void Camera::moveRight(float deltaTime)
+{
     float dirX, dirY, dirZ;
     getDirection(dirX, dirY, dirZ);
 
@@ -55,7 +62,8 @@ void Camera::moveRight(float deltaTime) {
     posZ += rightZ * speed * deltaTime;
 }
 
-void Camera::moveLeft(float deltaTime) {
+void Camera::moveLeft(float deltaTime)
+{
     float dirX, dirY, dirZ;
     getDirection(dirX, dirY, dirZ);
 
@@ -66,19 +74,78 @@ void Camera::moveLeft(float deltaTime) {
     posZ -= rightZ * speed * deltaTime;
 }
 
-// Movimiento vertical
-void Camera::moveUp(float deltaTime) {
+void Camera::moveUp(float deltaTime)
+{
     posY += speed * deltaTime;
 }
 
-void Camera::moveDown(float deltaTime) {
+void Camera::moveDown(float deltaTime)
+{
     posY -= speed * deltaTime;
 }
 
 // =======================
-// ROTACIÓN (RATÓN)
+// CONTROL TECLADO (PRO)
 // =======================
-void Camera::rotate(float deltaX, float deltaY) {
+void Camera::handleKeyboard(bool forward, bool backward, bool left, bool right, bool up, bool down, float deltaTime)
+{
+    float dirX, dirY, dirZ;
+    getDirection(dirX, dirY, dirZ);
+
+    // Normalizar dirección
+    float len = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+    dirX /= len;
+    dirY /= len;
+    dirZ /= len;
+
+    float rightX = -dirZ;
+    float rightZ = dirX;
+
+    float moveX = 0.0f;
+    float moveY = 0.0f;
+    float moveZ = 0.0f;
+
+    if (forward) {
+        moveX += dirX;
+        moveY += dirY;
+        moveZ += dirZ;
+    }
+    if (backward) {
+        moveX -= dirX;
+        moveY -= dirY;
+        moveZ -= dirZ;
+    }
+    if (right) {
+        moveX += rightX;
+        moveZ += rightZ;
+    }
+    if (left) {
+        moveX -= rightX;
+        moveZ -= rightZ;
+    }
+    if (up) moveY += 1.0f;
+    if (down) moveY -= 1.0f;
+
+    // Normalizar movimiento final
+    float moveLen = sqrt(moveX * moveX + moveY * moveY + moveZ * moveZ);
+
+    if (moveLen > 0.0f)
+    {
+        moveX /= moveLen;
+        moveY /= moveLen;
+        moveZ /= moveLen;
+
+        posX += moveX * speed * deltaTime;
+        posY += moveY * speed * deltaTime;
+        posZ += moveZ * speed * deltaTime;
+    }
+}
+
+// =======================
+// ROTACIÓN
+// =======================
+void Camera::rotate(float deltaX, float deltaY)
+{
     rotY += deltaX * sensitivity;
     rotX -= deltaY * sensitivity;
 
@@ -88,48 +155,23 @@ void Camera::rotate(float deltaX, float deltaY) {
 }
 
 // =======================
-// CONTROL COMPLETO CON RATÓN
+// RATÓN COMPLETO
 // =======================
 void Camera::handleMouse(float dx, float dy, float dt)
 {
-    // 1. ROTACIÓN (mirar)
     rotate(dx, dy);
-
-    // 2. MOVIMIENTO PROPORCIONAL
-    float force = 0.01f;
-    float deadZone = 1.0f;
-
-    // Adelante / atrás
-    if (fabs(dy) > deadZone)
-    {
-        float amount = fabs(dy) * force;
-
-        if (dy < 0)
-            moveForward(dt * amount);
-        else
-            moveBackward(dt * amount);
-    }
-
-    // Strafe izquierda / derecha
-    if (fabs(dx) > deadZone)
-    {
-        float amount = fabs(dx) * force;
-
-        if (dx > 0)
-            moveRight(dt * amount);
-        else
-            moveLeft(dt * amount);
-    }
 }
 
 // =======================
 // SETTERS
 // =======================
-void Camera::setSpeed(float s) {
+void Camera::setSpeed(float s)
+{
     speed = s;
 }
 
-void Camera::setSensitivity(float s) {
+void Camera::setSensitivity(float s)
+{
     sensitivity = s;
 }
 

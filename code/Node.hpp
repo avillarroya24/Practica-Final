@@ -9,6 +9,9 @@ class Node
 public:
     Transform transform;
 
+    virtual void update(float deltaTime) {}
+    virtual void render() {}
+
     void set_parent(Node& node);
 };
 

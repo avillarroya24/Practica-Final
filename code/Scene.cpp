@@ -1,6 +1,7 @@
 ﻿#include "Scene.hpp"
 #include "Camera.hpp"
 #include "Light.hpp"
+#include "Skybox.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -13,25 +14,23 @@ namespace udit
 {
     using namespace std;
 
-    // ================= SHADERS =================
+    // ==========================
+    // ===== SHADERS =============
+    // ==========================
     const string Scene::vertex_shader_code =
         "#version 330 core\n"
         "uniform mat4 model_view_matrix;\n"
         "uniform mat4 projection_matrix;\n"
         "layout(location = 0) in vec3 vertex_coordinates;\n"
         "layout(location = 1) in vec3 vertex_normal;\n"
-
         "out vec3 frag_color;\n"
         "out vec3 normal;\n"
         "out vec3 frag_pos;\n"
-
         "void main() {\n"
         "    vec4 world_pos = model_view_matrix * vec4(vertex_coordinates,1.0);\n"
         "    gl_Position = projection_matrix * world_pos;\n"
-
         "    normal = mat3(transpose(inverse(model_view_matrix))) * vertex_normal;\n"
         "    frag_pos = vec3(world_pos);\n"
-
         "    vec3 n = normalize(vertex_normal);\n"
         "    n = n * 0.5 + 0.3;\n"
         "    frag_color = n;\n"
@@ -39,80 +38,70 @@ namespace udit
 
     const string Scene::fragment_shader_code =
         "#version 330 core\n"
-
         "in vec3 frag_color;\n"
         "in vec3 normal;\n"
         "in vec3 frag_pos;\n"
-
         "out vec4 fragment_color;\n"
-
         "uniform vec3 light_pos;\n"
         "uniform vec3 view_pos;\n"
-
         "void main() {\n"
         "    vec3 norm = normalize(normal);\n"
         "    vec3 light_dir = normalize(light_pos - frag_pos);\n"
-
-        // Ambient un poco más fuerte
         "    float ambient_strength = 0.2;\n"
         "    vec3 ambient = ambient_strength * frag_color;\n"
-
-        // Diffuse
         "    float diff = max(dot(norm, light_dir), 0.0);\n"
         "    vec3 diffuse = diff * frag_color;\n"
-
-        // Specular un poco más brillante
         "    float specular_strength = 0.7;\n"
         "    vec3 view_dir = normalize(view_pos - frag_pos);\n"
         "    vec3 reflect_dir = reflect(-light_dir, norm);\n"
         "    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
         "    vec3 specular = specular_strength * spec * vec3(1.0);\n"
-
-        // Resultado final
         "    vec3 result = ambient + diffuse + specular;\n"
-
-        // Suavizar el pow final para no oscurecer
         "    result = pow(result, vec3(1.3));\n"
-
         "    fragment_color = vec4(result, 0.4);\n"
         "}";
 
-    // ================= CONSTRUCTOR =================
+    // ==========================
+    // ===== CONSTRUCTOR =========
+    // ==========================
     Scene::Scene(unsigned width, unsigned height)
-        : angle(0), terrain(200, 200, 1.0f) // Inicializamos el terreno
+        : angle(0)
     {
-        // Configuración básica de OpenGL
+        // ---------------- SKYBOX ----------------
+        skybox = std::make_shared<Skybox>("shared/assets/cube-map-0");
+
+        // ---------------- OPENGL SETTINGS ----------------
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL); // para skybox
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Color de fondo
-        glm::vec3 top(0.65f, 0.90f, 1.0f);
-        glm::vec3 bottom(0.20f, 0.45f, 0.75f);
-        float t = 0.09f;
-        glm::vec3 bg_color = glm::mix(bottom, top, t);
-        glClearColor(bg_color.r, bg_color.g, bg_color.b, 1.0f);
+        // Fondo azul
+        glClearColor(0.2f, 0.4f, 0.9f, 1.0f);
 
-        // Compilación de shaders
+        // ---------------- SHADERS ----------------
         program_id = compile_shaders();
         glUseProgram(program_id);
 
-        // Obtención de ubicaciones de matrices
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
-        // Ajuste inicial de la ventana
+        // ---------------- WINDOW SETUP ----------------
         resize(width, height);
     }
 
-    // ================= UPDATE =================
+    // ==========================
+    // ===== UPDATE =============
+    // ==========================
     void Scene::update()
     {
         angle += 0.01f;
     }
 
-    // ================= RENDER =================
+    // ==========================
+    // ===== RENDER =============
+    // ==========================
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -125,112 +114,98 @@ namespace udit
         terrain.Draw();
 
         // ---------------- CUBO GRANDE ----------------
-        glm::mat4 model_view_matrix = glm::mat4(1.0f);
-        model_view_matrix = glm::translate(model_view_matrix, glm::vec3(0.f, 0.f, -6.f));
-        model_view_matrix = glm::rotate(model_view_matrix, angle, glm::vec3(0.f, 1.f, 0.f));
-        model_view_matrix = glm::scale(model_view_matrix, glm::vec3(1.2f));
+        glm::mat4 big_cube = glm::mat4(1.0f);
+        big_cube = glm::translate(big_cube, glm::vec3(0.f, 0.f, -6.f));
+        big_cube = glm::rotate(big_cube, angle, glm::vec3(0.f, 1.f, 0.f));
+        big_cube = glm::scale(big_cube, glm::vec3(1.2f));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube));
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view_matrix));
-
-        // Desactivar blending para el cubo grande
-        glDisable(GL_BLEND);
-
-        glm::vec3 dynamic_color_big(
-            0.5f + 0.5f * sin(angle),
+        glDisable(GL_BLEND); // cubo opaco
+        glm::vec3 dynamic_color_big(0.5f + 0.5f * sin(angle),
             0.5f + 0.5f * cos(angle),
-            0.5f + 0.5f * sin(angle * 0.5f)
-        );
-        cube.set_color(dynamic_color_big); // Mantiene su degradado metálico
+            0.5f + 0.5f * sin(angle * 0.5f));
+        cube.set_color(dynamic_color_big);
         cube.render();
 
-        // ---------------- CUBO PEQUEÑO ORBITANDO ----------------
+        // ---------------- CUBO PEQUEÑO ----------------
         glm::mat4 small_cube = glm::mat4(1.0f);
         small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
         small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
         small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
         small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f));
         small_cube = glm::scale(small_cube, glm::vec3(0.35f));
-
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
 
-        // Activar blending solo para el cubo pequeño
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Mezcla estándar para transparencia
-
-        glm::vec4 dynamic_color_small(
-            0.5f + 0.5f * cos(angle * 1.5f),
+        glEnable(GL_BLEND); // cubo transparente
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glm::vec4 dynamic_color_small(0.5f + 0.5f * cos(angle * 1.5f),
             0.5f + 0.5f * sin(angle * 0.7f),
             0.5f + 0.5f * cos(angle * 2.0f),
-            0.5f // Alpha < 1 para que sea transparente
-        );
+            0.5f);
         cube.set_color(dynamic_color_small);
         cube.render();
-
-        // Después de renderizar el cubo pequeño, si vas a dibujar otros objetos opacos, recuerda:
         glDisable(GL_BLEND);
 
         // ---------------- CAMERA VIEW ----------------
         glm::vec3 cameraPos(camera.getX(), camera.getY(), camera.getZ());
-
         float dirX, dirY, dirZ;
         camera.getDirection(dirX, dirY, dirZ);
-
         glm::vec3 cameraFront = glm::normalize(glm::vec3(dirX, dirY, dirZ));
-        glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
+        glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     }
 
-    // ================= CONTROLES =================
-
- // Puedes dejar estos por si quieres combinar teclado + ratón
+    // ==========================
+    // ===== CONTROLES ==========
+    // ==========================
     void Scene::moveForward(float dt) { camera.moveForward(dt); }
     void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
     void Scene::moveLeft(float dt) { camera.moveLeft(dt); }
     void Scene::moveRight(float dt) { camera.moveRight(dt); }
     void Scene::moveUp(float dt) { camera.moveUp(dt); }
     void Scene::moveDown(float dt) { camera.moveDown(dt); }
+    void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
 
-    // Rotación directa (opcional)
-    void Scene::rotateCamera(float dx, float dy) {
-        camera.rotate(dx, dy);
-    }
-
-    // ================= RATÓN TOTAL (PRO) =================
+    // ==========================
+    // ===== MOUSE CONTROL ======
+    // ==========================
     void Scene::handleMouse(float dx, float dy, float dt)
     {
-        // 1. ROTACIÓN SIEMPRE ACTIVA (mirar libre)
+        // ROTACIÓN
         camera.rotate(dx, dy);
 
-        // 2. MOVIMIENTO SUAVE PROPORCIONAL
-        float movementForce = 0.01f;   // controla la velocidad general
-        float deadZone = 1.0f;         // evita micro-movimientos molestos
+        // MOVIMIENTO SUAVE
+        float movementForce = 0.01f;
+        float deadZone = 1.0f;
 
-        // ===== ADELANTE / ATRÁS =====
         if (fabs(dy) > deadZone)
         {
             float amount = fabs(dy) * movementForce;
-
-            if (dy < 0)
-                camera.moveForward(dt * amount);
-            else
-                camera.moveBackward(dt * amount);
+            (dy < 0) ? camera.moveForward(dt * amount) : camera.moveBackward(dt * amount);
         }
 
-        // ===== STRAFE IZQ / DER =====
         if (fabs(dx) > deadZone)
         {
             float amount = fabs(dx) * movementForce;
-
-            if (dx > 0)
-                camera.moveRight(dt * amount);
-            else
-                camera.moveLeft(dt * amount);
+            (dx > 0) ? camera.moveRight(dt * amount) : camera.moveLeft(dt * amount);
         }
+
+        // ---------------- SKYBOX ----------------
+        glm::vec3 camPos(camera.getX(), camera.getY(), camera.getZ());
+        float dx_, dy_, dz_;
+        camera.getDirection(dx_, dy_, dz_);
+        glm::vec3 front = glm::normalize(glm::vec3(dx_, dy_, dz_));
+        glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+        glm::mat4 view = glm::lookAt(camPos, camPos + front, up);
+        glm::mat4 projection = glm::perspective(glm::radians(45.f), 1024.0f / 576.0f, 0.1f, 5000.0f);
+
+        skybox->render(view, projection, skybox_shader);
     }
 
-
-    // ================= RESIZE =================
+    // ==========================
+    // ===== RESIZE =============
+    // ==========================
     void Scene::resize(unsigned width, unsigned height)
     {
         glm::mat4 projection_matrix = glm::perspective(glm::radians(45.f),
@@ -240,7 +215,9 @@ namespace udit
         glViewport(0, 0, width, height);
     }
 
-    // ================= SHADER HELPERS =================
+    // ==========================
+    // ===== SHADER HELPERS =====
+    // ==========================
     GLuint Scene::compile_shaders()
     {
         GLint success = GL_FALSE;
@@ -298,4 +275,5 @@ namespace udit
         std::cerr << log << std::endl;
         assert(false);
     }
-}
+
+} // namespace udit

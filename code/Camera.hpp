@@ -1,38 +1,46 @@
-#ifndef CAMERA_HPP
-#define CAMERA_HPP
+#pragma once
+#include "Node.hpp"
 
-class Camera {
+class Camera : public Node
+{
 private:
-    float posX, posY, posZ;   // Posición
-    float rotX, rotY;         // Pitch (X) y Yaw (Y)
-    float speed;              // Velocidad de movimiento
-    float sensitivity;        // Sensibilidad del ratón
+    // Posición
+    float posX, posY, posZ;
+
+    // Rotación (pitch y yaw)
+    float rotX, rotY;
+
+    // Configuración
+    float speed;
+    float sensitivity;
 
 public:
+    // Constructor
     Camera();
 
-    // ================= MOVIMIENTO =================
+    // Dirección
+    void getDirection(float& dirX, float& dirY, float& dirZ) const;
+
+    // Movimiento individual
     void moveForward(float deltaTime);
     void moveBackward(float deltaTime);
-    void moveLeft(float deltaTime);
     void moveRight(float deltaTime);
+    void moveLeft(float deltaTime);
     void moveUp(float deltaTime);
     void moveDown(float deltaTime);
 
-    // ================= ROTACIÓN =================
-    void rotate(float deltaX, float deltaY);
-
-    // ================= RATÓN COMPLETO =================
+    // Control completo
+    void handleKeyboard(bool forward, bool backward, bool left, bool right, bool up, bool down, float deltaTime);
     void handleMouse(float dx, float dy, float dt);
 
-    // ================= DIRECCIÓN =================
-    void getDirection(float& dirX, float& dirY, float& dirZ) const;
+    // Rotación
+    void rotate(float deltaX, float deltaY);
 
-    // ================= SETTERS =================
+    // Setters
     void setSpeed(float s);
     void setSensitivity(float s);
 
-    // ================= GETTERS =================
+    // Getters
     float getX() const;
     float getY() const;
     float getZ() const;
@@ -40,5 +48,3 @@ public:
     float getRotX() const;
     float getRotY() const;
 };
-
-#endif
