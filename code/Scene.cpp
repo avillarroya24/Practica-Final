@@ -67,6 +67,7 @@ namespace udit
     Scene::Scene(unsigned width, unsigned height)
         : angle(0)
     {
+
         // ---------------- SKYBOX ----------------
         skybox = std::make_shared<Skybox>("shared/assets/cube-map-0");
 
@@ -200,7 +201,8 @@ namespace udit
         glm::mat4 view = glm::lookAt(camPos, camPos + front, up);
         glm::mat4 projection = glm::perspective(glm::radians(45.f), 1024.0f / 576.0f, 0.1f, 5000.0f);
 
-        skybox->render(view, projection, skybox_shader);
+        glUseProgram(program_id);
+
     }
 
     // ==========================

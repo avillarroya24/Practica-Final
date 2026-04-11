@@ -6,15 +6,20 @@
 // =======================
 Camera::Camera()
 {
-    posX = 0.0f;
-    posY = 2.0f;
-    posZ = 5.0f;
+    position = glm::vec3(0.0f, 2.0f, 5.0f);
 
     rotX = 0.0f;
     rotY = 3.1416f;
 
     speed = 5.0f;
     sensitivity = 0.002f;
+
+    projection_matrix = glm::perspective(
+        glm::radians(60.0f),
+        1024.0f / 576.0f,
+        0.1f,
+        5000.0f
+    );
 }
 
 // =======================
@@ -28,134 +33,74 @@ void Camera::getDirection(float& dirX, float& dirY, float& dirZ) const
 }
 
 // =======================
-// MOVIMIENTO INDIVIDUAL
+// MOVIMIENTO
 // =======================
-void Camera::moveForward(float deltaTime)
+void Camera::moveForward(float dt)
 {
-    float dirX, dirY, dirZ;
-    getDirection(dirX, dirY, dirZ);
+    float dx, dy, dz;
+    getDirection(dx, dy, dz);
 
-    posX += dirX * speed * deltaTime;
-    posY += dirY * speed * deltaTime;
-    posZ += dirZ * speed * deltaTime;
+    position.x += dx * speed * dt;
+    position.y += dy * speed * dt;
+    position.z += dz * speed * dt;
 }
 
-void Camera::moveBackward(float deltaTime)
+void Camera::moveBackward(float dt)
 {
-    float dirX, dirY, dirZ;
-    getDirection(dirX, dirY, dirZ);
+    float dx, dy, dz;
+    getDirection(dx, dy, dz);
 
-    posX -= dirX * speed * deltaTime;
-    posY -= dirY * speed * deltaTime;
-    posZ -= dirZ * speed * deltaTime;
+    position.x -= dx * speed * dt;
+    position.y -= dy * speed * dt;
+    position.z -= dz * speed * dt;
 }
 
-void Camera::moveRight(float deltaTime)
+void Camera::moveRight(float dt)
 {
-    float dirX, dirY, dirZ;
-    getDirection(dirX, dirY, dirZ);
+    float dx, dy, dz;
+    getDirection(dx, dy, dz);
 
-    float rightX = -dirZ;
-    float rightZ = dirX;
+    glm::vec3 forward(dx, dy, dz);
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
-    posX += rightX * speed * deltaTime;
-    posZ += rightZ * speed * deltaTime;
+    position += right * speed * dt;
 }
 
-void Camera::moveLeft(float deltaTime)
+void Camera::moveLeft(float dt)
 {
-    float dirX, dirY, dirZ;
-    getDirection(dirX, dirY, dirZ);
+    float dx, dy, dz;
+    getDirection(dx, dy, dz);
 
-    float rightX = -dirZ;
-    float rightZ = dirX;
+    glm::vec3 forward(dx, dy, dz);
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
-    posX -= rightX * speed * deltaTime;
-    posZ -= rightZ * speed * deltaTime;
+    position -= right * speed * dt;
 }
 
-void Camera::moveUp(float deltaTime)
+void Camera::moveUp(float dt)
 {
-    posY += speed * deltaTime;
+    position.y += speed * dt;
 }
 
-void Camera::moveDown(float deltaTime)
+void Camera::moveDown(float dt)
 {
-    posY -= speed * deltaTime;
-}
-
-// =======================
-// CONTROL TECLADO (PRO)
-// =======================
-void Camera::handleKeyboard(bool forward, bool backward, bool left, bool right, bool up, bool down, float deltaTime)
-{
-    float dirX, dirY, dirZ;
-    getDirection(dirX, dirY, dirZ);
-
-    // Normalizar dirección
-    float len = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-    dirX /= len;
-    dirY /= len;
-    dirZ /= len;
-
-    float rightX = -dirZ;
-    float rightZ = dirX;
-
-    float moveX = 0.0f;
-    float moveY = 0.0f;
-    float moveZ = 0.0f;
-
-    if (forward) {
-        moveX += dirX;
-        moveY += dirY;
-        moveZ += dirZ;
-    }
-    if (backward) {
-        moveX -= dirX;
-        moveY -= dirY;
-        moveZ -= dirZ;
-    }
-    if (right) {
-        moveX += rightX;
-        moveZ += rightZ;
-    }
-    if (left) {
-        moveX -= rightX;
-        moveZ -= rightZ;
-    }
-    if (up) moveY += 1.0f;
-    if (down) moveY -= 1.0f;
-
-    // Normalizar movimiento final
-    float moveLen = sqrt(moveX * moveX + moveY * moveY + moveZ * moveZ);
-
-    if (moveLen > 0.0f)
-    {
-        moveX /= moveLen;
-        moveY /= moveLen;
-        moveZ /= moveLen;
-
-        posX += moveX * speed * deltaTime;
-        posY += moveY * speed * deltaTime;
-        posZ += moveZ * speed * deltaTime;
-    }
+    position.y -= speed * dt;
 }
 
 // =======================
 // ROTACIÓN
 // =======================
-void Camera::rotate(float deltaX, float deltaY)
+void Camera::rotate(float dx, float dy)
 {
-    rotY += deltaX * sensitivity;
-    rotX -= deltaY * sensitivity;
+    rotY += dx * sensitivity;
+    rotX -= dy * sensitivity;
 
-    // Limitar pitch
     if (rotX > 1.5f) rotX = 1.5f;
     if (rotX < -1.5f) rotX = -1.5f;
 }
 
 // =======================
-// RATÓN COMPLETO
+// INPUT MOUSE
 // =======================
 void Camera::handleMouse(float dx, float dy, float dt)
 {
@@ -163,8 +108,38 @@ void Camera::handleMouse(float dx, float dy, float dt)
 }
 
 // =======================
+// MATRIZ VIEW (SKYBOX)
+// =======================
+glm::mat4 Camera::get_transform_matrix_inverse() const
+{
+    float dx, dy, dz;
+    getDirection(dx, dy, dz);
+
+    glm::vec3 target = position + glm::vec3(dx, dy, dz);
+
+    return glm::lookAt(
+        position,
+        target,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+}
+
+// =======================
+// PROJECTION MATRIX
+// =======================
+const glm::mat4& Camera::get_projection_matrix() const
+{
+    return projection_matrix;
+}
+
+// =======================
 // SETTERS
 // =======================
+void Camera::setPosition(float x, float y, float z)
+{
+    position = glm::vec3(x, y, z);
+}
+
 void Camera::setSpeed(float s)
 {
     speed = s;
@@ -175,12 +150,22 @@ void Camera::setSensitivity(float s)
     sensitivity = s;
 }
 
+void Camera::setRatio(float ratio)
+{
+    projection_matrix = glm::perspective(
+        glm::radians(60.0f),
+        ratio,
+        0.1f,
+        5000.0f
+    );
+}
+
 // =======================
 // GETTERS
 // =======================
-float Camera::getX() const { return posX; }
-float Camera::getY() const { return posY; }
-float Camera::getZ() const { return posZ; }
+float Camera::getX() const { return position.x; }
+float Camera::getY() const { return position.y; }
+float Camera::getZ() const { return position.z; }
 
 float Camera::getRotX() const { return rotX; }
 float Camera::getRotY() const { return rotY; }

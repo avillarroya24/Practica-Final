@@ -1,46 +1,56 @@
 #pragma once
-#include "Node.hpp"
 
-class Camera : public Node
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+
+class Camera
 {
 private:
-    // Posición
-    float posX, posY, posZ;
+    // ================= POSICIÓN =================
+    glm::vec3 position;
 
-    // Rotación (pitch y yaw)
-    float rotX, rotY;
+    // ================= ROTACIÓN =================
+    float rotX; // pitch
+    float rotY; // yaw
 
-    // Configuración
+    // ================= CONFIG =================
     float speed;
     float sensitivity;
 
+    // ================= MATRICES =================
+    glm::mat4 projection_matrix;
+
 public:
-    // Constructor
+    // ================= CONSTRUCTOR =================
     Camera();
 
-    // Dirección
+    // ================= DIRECCIÓN =================
     void getDirection(float& dirX, float& dirY, float& dirZ) const;
 
-    // Movimiento individual
-    void moveForward(float deltaTime);
-    void moveBackward(float deltaTime);
-    void moveRight(float deltaTime);
-    void moveLeft(float deltaTime);
-    void moveUp(float deltaTime);
-    void moveDown(float deltaTime);
+    // ================= MOVIMIENTO =================
+    void moveForward(float dt);
+    void moveBackward(float dt);
+    void moveRight(float dt);
+    void moveLeft(float dt);
+    void moveUp(float dt);
+    void moveDown(float dt);
 
-    // Control completo
-    void handleKeyboard(bool forward, bool backward, bool left, bool right, bool up, bool down, float deltaTime);
+    // ================= INPUT =================
     void handleMouse(float dx, float dy, float dt);
+    void rotate(float dx, float dy);
 
-    // Rotación
-    void rotate(float deltaX, float deltaY);
+    // ================= MATRICES (CLAVE SKYBOX) =================
+    glm::mat4 get_transform_matrix_inverse() const;
+    const glm::mat4& get_projection_matrix() const;
 
-    // Setters
+    // ================= SETTERS =================
+    void setPosition(float x, float y, float z);
     void setSpeed(float s);
     void setSensitivity(float s);
+    void setRatio(float ratio);
 
-    // Getters
+    // ================= GETTERS =================
     float getX() const;
     float getY() const;
     float getZ() const;

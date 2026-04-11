@@ -4,29 +4,35 @@
 #include <string>
 #include <glad/gl.h>
 #include <glm.hpp>
-#include <gtc/type_ptr.hpp>
+#include "Camera.hpp"
 
 class Skybox
 {
-private:
-    GLuint vao_id;
-    GLuint vbo_id;
-    GLuint cubemap_texture;
-
-    static const GLfloat coordinates[108]; // 36 vértices * 3 componentes
-
-    // Carga el cubemap usando la misma imagen en las 6 caras
-    GLuint loadCubemap(const std::string& texture_path);
-
 public:
+    // ================= CONSTRUCTOR =================
     Skybox(const std::string& texture_path);
+
+    // ================= RENDER =================
+    // Ahora usa directamente la cámara (como el código del profe)
+    void render(const Camera& camera);
+
+    // ================= DESTRUCTOR =================
     ~Skybox();
 
-    void render(const glm::mat4& view,
-        const glm::mat4& projection,
-        GLuint shader);
+private:
+    // ================= OPENGL IDS =================
+    GLuint vao_id = 0;
+    GLuint vbo_id = 0;
+    GLuint cubemap_texture = 0;
+    GLuint shader_id = 0;
 
-    // Shaders para mostrar la textura del cubemap
+    // ================= GEOMETRÍA =================
+    static const GLfloat coordinates[108];
+
+    // ================= TEXTURA =================
+    GLuint loadCubemap(const std::string& texture_path);
+
+    // ================= SHADERS =================
     static const char* vertex_shader_code;
     static const char* fragment_shader_code;
 };

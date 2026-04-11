@@ -10,6 +10,8 @@
 #include <memory>
 #include <string>
 
+#include <glad/gl.h>   //NECESARIO para GLuint / GLint
+
 namespace udit
 {
     class Scene
@@ -31,6 +33,17 @@ namespace udit
         std::shared_ptr<Skybox> skybox;
         GLuint skybox_shader;
 
+        // ================= TEXTURA (AÑADIDO) =================
+        GLuint texture_id;          // textura del cubo
+        bool there_is_texture;      // control de uso
+
+        static const std::string texture_path;
+
+        GLuint create_texture_2d(const std::string& texture_path);
+        std::unique_ptr<class Color_Buffer> load_image(const std::string& image_path);
+
+        // ======================================================
+
         GLuint compile_shaders();
         void show_compilation_error(GLuint shader_id);
         void show_linkage_error(GLuint program_id);
@@ -44,7 +57,6 @@ namespace udit
 
         // ================= INPUT =================
 
-        // (Opcional) Movimiento por teclado
         void moveForward(float dt);
         void moveBackward(float dt);
         void moveLeft(float dt);
@@ -52,10 +64,7 @@ namespace udit
         void moveUp(float dt);
         void moveDown(float dt);
 
-        // Rotación directa (opcional)
         void rotateCamera(float dx, float dy);
-
-        // NUEVO: control total con ratón
         void handleMouse(float dx, float dy, float dt);
 
         GLuint program_id;
