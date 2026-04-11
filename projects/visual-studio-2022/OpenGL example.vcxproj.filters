@@ -42,9 +42,6 @@
     <ClInclude Include="Material.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Texture_Cube.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\code\Skybox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\code\Light.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\code\Texture_Cube.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
