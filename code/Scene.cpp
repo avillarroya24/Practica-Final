@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -15,7 +16,7 @@ namespace udit
     using namespace std;
 
     // ==========================
-    // ===== SHADERS =============
+    // ===== SHADERS (ENTEROS) ==
     // ==========================
     const string Scene::vertex_shader_code =
         "#version 330 core\n"
@@ -62,38 +63,49 @@ namespace udit
         "}";
 
     // ==========================
-    // ===== CONSTRUCTOR =========
+    // ===== HELPERS ============
+    // ==========================
+    static glm::mat4 make_model(
+        const glm::mat4& base,
+        const glm::vec3& t,
+        float rot,
+        const glm::vec3& axis,
+        const glm::vec3& scale)
+    {
+        glm::mat4 m = base;
+        m = glm::translate(m, t);
+        m = glm::rotate(m, rot, axis);
+        m = glm::scale(m, scale);
+        return m;
+    }
+
+    // ==========================
+    // ===== CONSTRUCTOR ========
     // ==========================
     Scene::Scene(unsigned width, unsigned height)
-        : angle(0)
+        : angle(0.0f)
     {
+        skybox = std::make_shared<Skybox>("../shared/assets/sky-cube-map");
 
-        // ---------------- SKYBOX ----------------
-        skybox = std::make_shared<Skybox>("shared/assets/cube-map-0");
-
-        // ---------------- OPENGL SETTINGS ----------------
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL); // para skybox
+        glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Fondo azul
         glClearColor(0.2f, 0.4f, 0.9f, 1.0f);
 
-        // ---------------- SHADERS ----------------
         program_id = compile_shaders();
         glUseProgram(program_id);
 
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
-        // ---------------- WINDOW SETUP ----------------
         resize(width, height);
     }
 
     // ==========================
-    // ===== UPDATE =============
+    // ===== UPDATE ============
     // ==========================
     void Scene::update()
     {
@@ -101,59 +113,64 @@ namespace udit
     }
 
     // ==========================
-    // ===== RENDER =============
+    // ===== RENDER ============
     // ==========================
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program_id);
 
-        // ---------------- TERRAIN ----------------
-        glm::mat4 terrain_matrix = glm::mat4(1.0f);
-        terrain_matrix = glm::translate(terrain_matrix, glm::vec3(-100.f, -5.f, -200.f));
+        glm::mat4 I(1.0f);
+
+        // -------- TERRAIN --------
+        glm::mat4 terrain_matrix =
+            glm::translate(I, glm::vec3(-100.f, -5.f, -200.f));
+
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(terrain_matrix));
         terrain.Draw();
 
-        // ---------------- CUBO GRANDE ----------------
-        glm::mat4 big_cube = glm::mat4(1.0f);
-        big_cube = glm::translate(big_cube, glm::vec3(0.f, 0.f, -6.f));
-        big_cube = glm::rotate(big_cube, angle, glm::vec3(0.f, 1.f, 0.f));
-        big_cube = glm::scale(big_cube, glm::vec3(1.2f));
+        // -------- CUBO GRANDE --------
+        glm::mat4 big_cube = make_model(
+            I,
+            glm::vec3(0.f, 0.f, -6.f),
+            angle,
+            glm::vec3(0.f, 1.f, 0.f),
+            glm::vec3(1.2f)
+        );
+
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube));
 
-        glDisable(GL_BLEND); // cubo opaco
-        glm::vec3 dynamic_color_big(0.5f + 0.5f * sin(angle),
-            0.5f + 0.5f * cos(angle),
-            0.5f + 0.5f * sin(angle * 0.5f));
-        cube.set_color(dynamic_color_big);
-        cube.render();
-
-        // ---------------- CUBO PEQUEÑO ----------------
-        glm::mat4 small_cube = glm::mat4(1.0f);
-        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
-        small_cube = glm::rotate(small_cube, angle * 2.0f, glm::vec3(0.f, 1.f, 0.f));
-        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
-        small_cube = glm::rotate(small_cube, angle * 3.0f, glm::vec3(1.f, 1.f, 0.f));
-        small_cube = glm::scale(small_cube, glm::vec3(0.35f));
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
-
-        glEnable(GL_BLEND); // cubo transparente
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glm::vec4 dynamic_color_small(0.5f + 0.5f * cos(angle * 1.5f),
-            0.5f + 0.5f * sin(angle * 0.7f),
-            0.5f + 0.5f * cos(angle * 2.0f),
-            0.5f);
-        cube.set_color(dynamic_color_small);
-        cube.render();
         glDisable(GL_BLEND);
 
-        // ---------------- CAMERA VIEW ----------------
-        glm::vec3 cameraPos(camera.getX(), camera.getY(), camera.getZ());
-        float dirX, dirY, dirZ;
-        camera.getDirection(dirX, dirY, dirZ);
-        glm::vec3 cameraFront = glm::normalize(glm::vec3(dirX, dirY, dirZ));
-        glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        cube.set_color(glm::vec3(
+            0.5f + 0.5f * sin(angle),
+            0.5f + 0.5f * cos(angle),
+            0.5f + 0.5f * sin(angle * 0.5f)
+        ));
+
+        cube.render();
+
+        // -------- CUBO PEQUEÑO --------
+        glm::mat4 small_cube = I;
+        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
+        small_cube = glm::rotate(small_cube, angle * 2.f, glm::vec3(0, 1, 0));
+        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
+        small_cube = glm::rotate(small_cube, angle * 3.f, glm::vec3(1, 1, 0));
+        small_cube = glm::scale(small_cube, glm::vec3(0.35f));
+
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
+
+        glEnable(GL_BLEND);
+
+        cube.set_color(glm::vec4(
+            0.5f + 0.5f * cos(angle * 1.5f),
+            0.5f + 0.5f * sin(angle * 0.7f),
+            0.5f + 0.5f * cos(angle * 2.0f),
+            0.5f
+        ));
+
+        cube.render();
+        glDisable(GL_BLEND);
     }
 
     // ==========================
@@ -168,114 +185,115 @@ namespace udit
     void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
 
     // ==========================
-    // ===== MOUSE CONTROL ======
+    // ===== MOUSE ============
     // ==========================
     void Scene::handleMouse(float dx, float dy, float dt)
     {
-        // ROTACIÓN
         camera.rotate(dx, dy);
 
-        // MOVIMIENTO SUAVE
-        float movementForce = 0.01f;
-        float deadZone = 1.0f;
+        const float speed = 5.0f * dt;
 
-        if (fabs(dy) > deadZone)
+        float dirX, dirY, dirZ;
+        camera.getDirection(dirX, dirY, dirZ);
+
+        glm::vec3 forward = glm::normalize(glm::vec3(dirX, dirY, dirZ));
+        glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
+
+        if (std::fabs(dy) > 1.0f)
         {
-            float amount = fabs(dy) * movementForce;
-            (dy < 0) ? camera.moveForward(dt * amount) : camera.moveBackward(dt * amount);
+            camera.setPosition(
+                camera.getX() + forward.x * speed * (dy < 0 ? 1 : -1),
+                camera.getY() + forward.y * speed * (dy < 0 ? 1 : -1),
+                camera.getZ() + forward.z * speed * (dy < 0 ? 1 : -1)
+            );
         }
 
-        if (fabs(dx) > deadZone)
+        if (std::fabs(dx) > 1.0f)
         {
-            float amount = fabs(dx) * movementForce;
-            (dx > 0) ? camera.moveRight(dt * amount) : camera.moveLeft(dt * amount);
+            camera.setPosition(
+                camera.getX() + right.x * speed * (dx > 0 ? 1 : -1),
+                camera.getY() + right.y * speed * (dx > 0 ? 1 : -1),
+                camera.getZ() + right.z * speed * (dx > 0 ? 1 : -1)
+            );
         }
-
-        // ---------------- SKYBOX ----------------
-        glm::vec3 camPos(camera.getX(), camera.getY(), camera.getZ());
-        float dx_, dy_, dz_;
-        camera.getDirection(dx_, dy_, dz_);
-        glm::vec3 front = glm::normalize(glm::vec3(dx_, dy_, dz_));
-        glm::vec3 up(0.0f, 1.0f, 0.0f);
-
-        glm::mat4 view = glm::lookAt(camPos, camPos + front, up);
-        glm::mat4 projection = glm::perspective(glm::radians(45.f), 1024.0f / 576.0f, 0.1f, 5000.0f);
-
-        glUseProgram(program_id);
-
     }
 
     // ==========================
-    // ===== RESIZE =============
+    // ===== RESIZE ============
     // ==========================
     void Scene::resize(unsigned width, unsigned height)
     {
-        glm::mat4 projection_matrix = glm::perspective(glm::radians(45.f),
-            GLfloat(width) / height,
-            1.f, 5000.f);
-        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+        glm::mat4 proj = glm::perspective(
+            glm::radians(45.f),
+            float(width) / height,
+            1.f,
+            5000.f
+        );
+
+        glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, glm::value_ptr(proj));
         glViewport(0, 0, width, height);
     }
 
     // ==========================
-    // ===== SHADER HELPERS =====
+    // ===== SHADERS ============
     // ==========================
     GLuint Scene::compile_shaders()
     {
-        GLint success = GL_FALSE;
+        GLint success;
 
-        GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 
-        const char* v_code = vertex_shader_code.c_str();
-        const char* f_code = fragment_shader_code.c_str();
+        const char* v = vertex_shader_code.c_str();
+        const char* f = fragment_shader_code.c_str();
 
-        glShaderSource(vertex_shader, 1, &v_code, nullptr);
-        glShaderSource(fragment_shader, 1, &f_code, nullptr);
+        glShaderSource(vs, 1, &v, nullptr);
+        glShaderSource(fs, 1, &f, nullptr);
 
-        glCompileShader(vertex_shader);
-        glCompileShader(fragment_shader);
+        glCompileShader(vs);
+        glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
+        if (!success) show_compilation_error(vs);
 
-        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-        if (!success) show_compilation_error(vertex_shader);
-
-        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-        if (!success) show_compilation_error(fragment_shader);
+        glCompileShader(fs);
+        glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
+        if (!success) show_compilation_error(fs);
 
         GLuint prog = glCreateProgram();
-        glAttachShader(prog, vertex_shader);
-        glAttachShader(prog, fragment_shader);
+        glAttachShader(prog, vs);
+        glAttachShader(prog, fs);
         glLinkProgram(prog);
 
         glGetProgramiv(prog, GL_LINK_STATUS, &success);
         if (!success) show_linkage_error(prog);
 
-        glDeleteShader(vertex_shader);
-        glDeleteShader(fragment_shader);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
 
         return prog;
     }
 
-    void Scene::show_compilation_error(GLuint shader_id)
+    void Scene::show_compilation_error(GLuint id)
     {
-        GLint logLength;
-        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &logLength);
+        GLint len;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
 
-        std::string log(logLength, ' ');
-        glGetShaderInfoLog(shader_id, logLength, nullptr, &log[0]);
+        std::string log(len, '\0');
+        glGetShaderInfoLog(id, len, nullptr, log.data());
+
         std::cerr << log << std::endl;
         assert(false);
     }
 
-    void Scene::show_linkage_error(GLuint program_id)
+    void Scene::show_linkage_error(GLuint id)
     {
-        GLint logLength;
-        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &logLength);
+        GLint len;
+        glGetProgramiv(id, GL_INFO_LOG_LENGTH, &len);
 
-        std::string log(logLength, ' ');
-        glGetProgramInfoLog(program_id, logLength, nullptr, &log[0]);
+        std::string log(len, '\0');
+        glGetProgramInfoLog(id, len, nullptr, log.data());
+
         std::cerr << log << std::endl;
         assert(false);
     }
 
-} // namespace udit
+}

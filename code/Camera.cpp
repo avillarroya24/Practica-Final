@@ -14,53 +14,64 @@ Camera::Camera()
     speed = 5.0f;
     sensitivity = 0.002f;
 
+    fov = 60.0f;
+    near_z = 0.1f;
+    far_z = 5000.0f;
+    ratio = 16.0f / 9.0f;
+
+    updateProjection();
+}
+
+// =======================
+// PROJECTION
+// =======================
+void Camera::updateProjection()
+{
     projection_matrix = glm::perspective(
-        glm::radians(60.0f),
-        1024.0f / 576.0f,
-        0.1f,
-        5000.0f
+        glm::radians(fov),
+        ratio,
+        near_z,
+        far_z
     );
 }
 
 // =======================
-// DIRECCIÓN
+// DIRECCIÓN (NORMALIZADA)
 // =======================
-void Camera::getDirection(float& dirX, float& dirY, float& dirZ) const
+void Camera::getDirection(float& x, float& y, float& z) const
 {
-    dirX = cos(rotX) * cos(rotY);
-    dirY = sin(rotX);
-    dirZ = cos(rotX) * sin(rotY);
+    x = cos(rotX) * cos(rotY);
+    y = sin(rotX);
+    z = cos(rotX) * sin(rotY);
 }
 
 // =======================
-// MOVIMIENTO
+// MOVIMIENTO RELATIVO
 // =======================
 void Camera::moveForward(float dt)
 {
-    float dx, dy, dz;
-    getDirection(dx, dy, dz);
+    float x, y, z;
+    getDirection(x, y, z);
 
-    position.x += dx * speed * dt;
-    position.y += dy * speed * dt;
-    position.z += dz * speed * dt;
+    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
+    position += forward * speed * dt;
 }
 
 void Camera::moveBackward(float dt)
 {
-    float dx, dy, dz;
-    getDirection(dx, dy, dz);
+    float x, y, z;
+    getDirection(x, y, z);
 
-    position.x -= dx * speed * dt;
-    position.y -= dy * speed * dt;
-    position.z -= dz * speed * dt;
+    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
+    position -= forward * speed * dt;
 }
 
 void Camera::moveRight(float dt)
 {
-    float dx, dy, dz;
-    getDirection(dx, dy, dz);
+    float x, y, z;
+    getDirection(x, y, z);
 
-    glm::vec3 forward(dx, dy, dz);
+    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
     glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
     position += right * speed * dt;
@@ -68,10 +79,10 @@ void Camera::moveRight(float dt)
 
 void Camera::moveLeft(float dt)
 {
-    float dx, dy, dz;
-    getDirection(dx, dy, dz);
+    float x, y, z;
+    getDirection(x, y, z);
 
-    glm::vec3 forward(dx, dy, dz);
+    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
     glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
     position -= right * speed * dt;
@@ -88,44 +99,39 @@ void Camera::moveDown(float dt)
 }
 
 // =======================
-// ROTACIÓN
+// ROTACIÓN LIBRE (FPS + SMOOTH)
 // =======================
 void Camera::rotate(float dx, float dy)
 {
     rotY += dx * sensitivity;
     rotX -= dy * sensitivity;
 
-    if (rotX > 1.5f) rotX = 1.5f;
-    if (rotX < -1.5f) rotX = -1.5f;
+    //CLAMP SUAVE (evita flip completo)
+    const float limit = 1.55f;
+
+    if (rotX > limit) rotX = limit;
+    if (rotX < -limit) rotX = -limit;
 }
 
 // =======================
-// INPUT MOUSE
+// VIEW MATRIX
 // =======================
-void Camera::handleMouse(float dx, float dy, float dt)
+glm::mat4 Camera::get_view_matrix() const
 {
-    rotate(dx, dy);
-}
+    float x, y, z;
+    getDirection(x, y, z);
 
-// =======================
-// MATRIZ VIEW (SKYBOX)
-// =======================
-glm::mat4 Camera::get_transform_matrix_inverse() const
-{
-    float dx, dy, dz;
-    getDirection(dx, dy, dz);
-
-    glm::vec3 target = position + glm::vec3(dx, dy, dz);
+    glm::vec3 front = glm::normalize(glm::vec3(x, y, z));
 
     return glm::lookAt(
         position,
-        target,
-        glm::vec3(0.0f, 1.0f, 0.0f)
+        position + front,
+        glm::vec3(0, 1, 0)
     );
 }
 
 // =======================
-// PROJECTION MATRIX
+// PROJECTION
 // =======================
 const glm::mat4& Camera::get_projection_matrix() const
 {
@@ -150,14 +156,10 @@ void Camera::setSensitivity(float s)
     sensitivity = s;
 }
 
-void Camera::setRatio(float ratio)
+void Camera::setRatio(float r)
 {
-    projection_matrix = glm::perspective(
-        glm::radians(60.0f),
-        ratio,
-        0.1f,
-        5000.0f
-    );
+    ratio = r;
+    updateProjection();
 }
 
 // =======================

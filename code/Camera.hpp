@@ -7,26 +7,36 @@
 class Camera
 {
 private:
+
     // ================= POSICIÓN =================
     glm::vec3 position;
 
-    // ================= ROTACIÓN =================
+    // ================= ROTACIÓN FPS =================
     float rotX; // pitch
     float rotY; // yaw
 
-    // ================= CONFIG =================
+    // ================= MOVIMIENTO =================
     float speed;
     float sensitivity;
 
-    // ================= MATRICES =================
+    // ================= PROYECCIÓN =================
+    float fov;
+    float near_z;
+    float far_z;
+    float ratio;
+
     glm::mat4 projection_matrix;
 
+private:
+    void updateProjection();
+
 public:
+
     // ================= CONSTRUCTOR =================
     Camera();
 
     // ================= DIRECCIÓN =================
-    void getDirection(float& dirX, float& dirY, float& dirZ) const;
+    void getDirection(float& x, float& y, float& z) const;
 
     // ================= MOVIMIENTO =================
     void moveForward(float dt);
@@ -36,19 +46,18 @@ public:
     void moveUp(float dt);
     void moveDown(float dt);
 
-    // ================= INPUT =================
-    void handleMouse(float dx, float dy, float dt);
+    // ================= ROTACIÓN =================
     void rotate(float dx, float dy);
 
-    // ================= MATRICES (CLAVE SKYBOX) =================
-    glm::mat4 get_transform_matrix_inverse() const;
+    // ================= MATRICES =================
+    glm::mat4 get_view_matrix() const;
     const glm::mat4& get_projection_matrix() const;
 
     // ================= SETTERS =================
     void setPosition(float x, float y, float z);
     void setSpeed(float s);
     void setSensitivity(float s);
-    void setRatio(float ratio);
+    void setRatio(float r);
 
     // ================= GETTERS =================
     float getX() const;

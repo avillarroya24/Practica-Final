@@ -6,35 +6,38 @@
 #include <glm.hpp>
 #include "Camera.hpp"
 
+class Camera;
+
 class Skybox
 {
 public:
-    // ================= CONSTRUCTOR =================
-    Skybox(const std::string& texture_path);
 
-    // ================= RENDER =================
-    // Ahora usa directamente la cámara (como el código del profe)
+    // Constructor: recibe la ruta base del cubemap
+    Skybox(const std::string& path);
+
+    // Render del skybox
     void render(const Camera& camera);
 
-    // ================= DESTRUCTOR =================
+    // Destructor
     ~Skybox();
 
 private:
-    // ================= OPENGL IDS =================
-    GLuint vao_id = 0;
-    GLuint vbo_id = 0;
-    GLuint cubemap_texture = 0;
-    GLuint shader_id = 0;
 
-    // ================= GEOMETRÍA =================
-    static const GLfloat coordinates[108];
+    // ====== CARGA DEL CUBEMAP ======
+    GLuint loadCubemap(const std::string& base_path);
 
-    // ================= TEXTURA =================
-    GLuint loadCubemap(const std::string& texture_path);
-
-    // ================= SHADERS =================
+    // ====== SHADERS ======
     static const char* vertex_shader_code;
     static const char* fragment_shader_code;
+
+    // ====== GEOMETRÍA DEL CUBO ======
+    static const GLfloat coordinates[];
+
+    // ====== IDs OpenGL ======
+    GLuint vao_id = 0;
+    GLuint vbo_id = 0;
+    GLuint shader_id = 0;
+    GLuint cubemap_texture = 0;
 };
 
 #endif

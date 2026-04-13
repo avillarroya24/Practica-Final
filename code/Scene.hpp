@@ -10,53 +10,50 @@
 #include <memory>
 #include <string>
 
-#include <glad/gl.h>   //NECESARIO para GLuint / GLint
+#include <glad/gl.h>
 
 namespace udit
 {
     class Scene
     {
     private:
+
+        // ================= SHADERS =================
         static const std::string vertex_shader_code;
         static const std::string fragment_shader_code;
+
+        GLuint program_id;
 
         GLint model_view_matrix_id;
         GLint projection_matrix_id;
 
+        // ================= OBJETOS =================
         Cube cube;
-        float angle;
-
         Terrain terrain;
         Camera camera;
         Light light;
 
         std::shared_ptr<Skybox> skybox;
-        GLuint skybox_shader;
 
-        // ================= TEXTURA (AÑADIDO) =================
-        GLuint texture_id;          // textura del cubo
-        bool there_is_texture;      // control de uso
+        // ================= ESTADO =================
+        float angle;
 
-        static const std::string texture_path;
-
-        GLuint create_texture_2d(const std::string& texture_path);
-        std::unique_ptr<class Color_Buffer> load_image(const std::string& image_path);
-
-        // ======================================================
-
+        // ================= HELPERS =================
         GLuint compile_shaders();
         void show_compilation_error(GLuint shader_id);
         void show_linkage_error(GLuint program_id);
 
     public:
+
+        // ================= CONSTRUCTOR =================
         Scene(unsigned width, unsigned height);
 
+        // ================= LOOP =================
         void update();
         void render();
         void resize(unsigned width, unsigned height);
 
-        // ================= INPUT =================
-
+        // ================= CONTROLES =================
         void moveForward(float dt);
         void moveBackward(float dt);
         void moveLeft(float dt);
@@ -66,7 +63,5 @@ namespace udit
 
         void rotateCamera(float dx, float dy);
         void handleMouse(float dx, float dy, float dt);
-
-        GLuint program_id;
     };
 }

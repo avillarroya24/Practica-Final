@@ -5,11 +5,50 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
-// ================= CUBO =================
+// ================= CUBO (36 vértices) =================
 const GLfloat Skybox::coordinates[] =
 {
-    -1,-1,-1,  1,-1,-1,  1, 1,-1,  -1,-1,-1,  1, 1,-1, -1, 1,-1,
-    -1,-1, 1,  1,-1, 1,  1, 1, 1,  -1,-1, 1,  1, 1, 1, -1, 1, 1,
+    -1.0f, +1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+    +1.0f, +1.0f, -1.0f,
+    -1.0f, +1.0f, -1.0f,
+
+    -1.0f, -1.0f, +1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, +1.0f, -1.0f,
+    -1.0f, +1.0f, -1.0f,
+    -1.0f, +1.0f, +1.0f,
+    -1.0f, -1.0f, +1.0f,
+
+    +1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, +1.0f,
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f, +1.0f,
+    -1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, -1.0f, +1.0f,
+    -1.0f, -1.0f, +1.0f,
+
+    -1.0f, +1.0f, -1.0f,
+    +1.0f, +1.0f, -1.0f,
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, +1.0f,
+    -1.0f, +1.0f, +1.0f,
+    -1.0f, +1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, +1.0f,
+    +1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, +1.0f,
+    +1.0f, -1.0f, +1.0f,
 };
 
 // ================= SHADERS =================
@@ -20,9 +59,8 @@ const char* Skybox::vertex_shader_code =
 "uniform mat4 projection;\n"
 "uniform mat4 view;\n"
 "void main() {\n"
-"    TexCoords = aPos;\n"
-"    vec4 pos = projection * view * vec4(aPos, 1.0);\n"
-"    gl_Position = pos.xyww;\n"
+"    TexCoords = vec3(aPos.x, -aPos.y, aPos.z);\n"
+"    gl_Position = projection * view * vec4(aPos, 1.0);\n"
 "}";
 
 const char* Skybox::fragment_shader_code =
@@ -37,27 +75,47 @@ const char* Skybox::fragment_shader_code =
 // ================= CUBEMAP =================
 GLuint Skybox::loadCubemap(const std::string& base_path)
 {
-    GLuint tex;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+    GLuint texID;
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 
-    for (int i = 0; i < 6; i++)
+    std::vector<std::string> faces =
     {
-        int w, h, c;
+        base_path + "/right.jpg",
+        base_path + "/left.jpg",
+        base_path + "/top.jpg",
+        base_path + "/bottom.jpg",
+        base_path + "/front.jpg",
+        base_path + "/back.jpg"
+    };
 
-        unsigned char* data =
-            SOIL_load_image(base_path.c_str(), &w, &h, &c, SOIL_LOAD_RGBA);
+    int width, height, channels;
+
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = SOIL_load_image(
+            faces[i].c_str(),
+            &width, &height, &channels,
+            SOIL_LOAD_RGBA
+        );
 
         if (!data)
         {
-            std::cerr << "Error cargando cubemap: " << base_path << std::endl;
-            glDeleteTextures(1, &tex);
+            std::cerr << "Error cargando cara del cubemap: " << faces[i] << std::endl;
+            glDeleteTextures(1, &texID);
             return 0;
         }
 
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, GL_RGBA, w, h, 0,
-            GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0,
+            GL_RGBA,
+            width, height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            data
+        );
 
         SOIL_free_image_data(data);
     }
@@ -68,7 +126,7 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    return tex;
+    return texID;
 }
 
 // ================= CONSTRUCTOR =================
@@ -76,7 +134,6 @@ Skybox::Skybox(const std::string& path)
 {
     cubemap_texture = loadCubemap(path);
 
-    // -------- SHADER --------
     shader_id = glCreateProgram();
 
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
@@ -97,7 +154,6 @@ Skybox::Skybox(const std::string& path)
     glUseProgram(shader_id);
     glUniform1i(glGetUniformLocation(shader_id, "skybox"), 0);
 
-    // -------- VAO/VBO --------
     glGenVertexArrays(1, &vao_id);
     glGenBuffers(1, &vbo_id);
 
@@ -114,34 +170,21 @@ Skybox::Skybox(const std::string& path)
 // ================= RENDER =================
 void Skybox::render(const Camera& camera)
 {
+    glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
+
     glUseProgram(shader_id);
 
-    // ===== VIEW (SIN TRASLACIÓN) =====
-    float dx, dy, dz;
-    camera.getDirection(dx, dy, dz);
 
-    glm::mat4 view = glm::mat4(glm::mat3(
-        glm::lookAt(glm::vec3(0.0f),
-            glm::normalize(glm::vec3(dx, dy, dz)),
-            glm::vec3(0, 1, 0))
-    ));
 
-    glm::mat4 projection = glm::perspective(
-        glm::radians(45.f),
-        1024.f / 576.f,
-        0.1f,
-        5000.f
-    );
+    // ===== PROYECCIÓN REAL DE LA CÁMARA =====
+    glm::mat4 projection = camera.get_projection_matrix();
 
-    // ===== UNIFORMS (OPTIMIZADO: sin llamadas repetidas) =====
     static GLint viewLoc = glGetUniformLocation(shader_id, "view");
     static GLint projLoc = glGetUniformLocation(shader_id, "projection");
 
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-    // ===== DRAW =====
     glBindVertexArray(vao_id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture);
@@ -149,6 +192,8 @@ void Skybox::render(const Camera& camera)
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(0);
+
+    glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 }
 
