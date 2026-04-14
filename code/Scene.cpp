@@ -85,7 +85,7 @@ namespace udit
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
-        skybox = std::make_shared<Skybox>("../shared/assets/sky-cube-map-");
+        skybox = std::make_shared<Skybox>("../../shared/assets/sky-cube-map-");
 
 
         glEnable(GL_CULL_FACE);
@@ -123,13 +123,8 @@ namespace udit
         // ============================
         // 1. DIBUJAR SKYBOX PRIMERO
         // ============================
-        //glDepthMask(GL_FALSE);      // no escribir en depth
-        //glDepthFunc(GL_LEQUAL);     // permitir profundidad <=
 
-        //skybox->render(camera);     // <-- usa su propio shader
-
-        //glDepthMask(GL_TRUE);       // restaurar depth
-        //glDepthFunc(GL_LESS);
+        skybox->render(camera);     // <-- usa su propio shader
 
         // ============================
         // 2. ACTIVAR SHADER PRINCIPAL
@@ -257,6 +252,8 @@ namespace udit
     // ==========================
     void Scene::resize(unsigned width, unsigned height)
     {
+        camera.setRatio(float(width) / height);
+
         glm::mat4 proj = glm::perspective(
             glm::radians(45.f),
             float(width) / height,

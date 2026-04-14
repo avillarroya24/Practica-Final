@@ -80,17 +80,15 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 
-    // base_path viene como "../../../shared/assets/sky-cube-map-"
-    // así que los ficheros son:
-    // sky-cube-map-0.jpg ... sky-cube-map-5.jpg
+
     std::vector<std::string> faces =
     {
-        base_path + "0.jpg", // +X
-        base_path + "1.jpg", // -X
-        base_path + "2.jpg", // +Y
-        base_path + "3.jpg", // -Y
-        base_path + "4.jpg", // +Z
-        base_path + "5.jpg"  // -Z
+        base_path + "1.png", // +X
+        base_path + "1.png", // -X
+        base_path + "1.png", // +Y
+        base_path + "1.png", // -Y
+        base_path + "1.png", // +Z
+        base_path + "1.png"  // -Z
     };
 
     int width, height, channels;

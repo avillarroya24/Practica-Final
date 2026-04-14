@@ -13,7 +13,7 @@ private:
 
     // ================= ROTACIÓN FPS =================
     float rotX; // pitch
-    float rotY; // yaw
+    float rotY; // yawsd
 
     // ================= MOVIMIENTO =================
     float speed;
