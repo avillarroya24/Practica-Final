@@ -85,7 +85,8 @@ namespace udit
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
-        skybox = std::make_shared<Skybox>("../shared/assets/sky-cube-map");
+        skybox = std::make_shared<Skybox>("../shared/assets/sky-cube-map-");
+
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
@@ -118,19 +119,43 @@ namespace udit
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // ============================
+        // 1. DIBUJAR SKYBOX PRIMERO
+        // ============================
+        //glDepthMask(GL_FALSE);      // no escribir en depth
+        //glDepthFunc(GL_LEQUAL);     // permitir profundidad <=
+
+        //skybox->render(camera);     // <-- usa su propio shader
+
+        //glDepthMask(GL_TRUE);       // restaurar depth
+        //glDepthFunc(GL_LESS);
+
+        // ============================
+        // 2. ACTIVAR SHADER PRINCIPAL
+        // ============================
         glUseProgram(program_id);
 
+        // ============================
+        // 3. MATRIZ DE VISTA
+        // ============================
         glm::mat4 I(1.0f);
+        glm::mat4 view = camera.get_view_matrix();
 
-        // -------- TERRAIN --------
-        glm::mat4 terrain_matrix =
-            glm::translate(I, glm::vec3(-100.f, -5.f, -200.f));
+        // ============================================================
+        // ----------------------   T E R R E N O   --------------------
+        // ============================================================
+        glm::mat4 model = glm::translate(I, glm::vec3(-100.f, -5.f, -200.f));
+        glm::mat4 model_view = view * model;
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(terrain_matrix));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view));
         terrain.Draw();
 
-        // -------- CUBO GRANDE --------
-        glm::mat4 big_cube = make_model(
+
+        // ============================================================
+        // -------------------   C U B O   G R A N D E   --------------
+        // ============================================================
+        glm::mat4 big_cube_model = make_model(
             I,
             glm::vec3(0.f, 0.f, -6.f),
             angle,
@@ -138,7 +163,9 @@ namespace udit
             glm::vec3(1.2f)
         );
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube));
+        glm::mat4 big_cube_mv = view * big_cube_model;
+
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube_mv));
 
         glDisable(GL_BLEND);
 
@@ -150,15 +177,20 @@ namespace udit
 
         cube.render();
 
-        // -------- CUBO PEQUEÑO --------
-        glm::mat4 small_cube = I;
-        small_cube = glm::translate(small_cube, glm::vec3(0.f, 0.f, -6.f));
-        small_cube = glm::rotate(small_cube, angle * 2.f, glm::vec3(0, 1, 0));
-        small_cube = glm::translate(small_cube, glm::vec3(4.f, 0.f, 0.f));
-        small_cube = glm::rotate(small_cube, angle * 3.f, glm::vec3(1, 1, 0));
-        small_cube = glm::scale(small_cube, glm::vec3(0.35f));
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube));
+        // ============================================================
+        // -------------------   C U B O   P E Q U E Ñ O   ------------
+        // ============================================================
+        glm::mat4 small_cube_model = I;
+        small_cube_model = glm::translate(small_cube_model, glm::vec3(0.f, 0.f, -6.f));
+        small_cube_model = glm::rotate(small_cube_model, angle * 2.f, glm::vec3(0, 1, 0));
+        small_cube_model = glm::translate(small_cube_model, glm::vec3(4.f, 0.f, 0.f));
+        small_cube_model = glm::rotate(small_cube_model, angle * 3.f, glm::vec3(1, 1, 0));
+        small_cube_model = glm::scale(small_cube_model, glm::vec3(0.35f));
+
+        glm::mat4 small_cube_mv = view * small_cube_model;
+
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube_mv));
 
         glEnable(GL_BLEND);
 
@@ -170,8 +202,10 @@ namespace udit
         ));
 
         cube.render();
+
         glDisable(GL_BLEND);
     }
+
 
     // ==========================
     // ===== CONTROLES ==========

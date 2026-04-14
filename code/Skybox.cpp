@@ -59,8 +59,9 @@ const char* Skybox::vertex_shader_code =
 "uniform mat4 projection;\n"
 "uniform mat4 view;\n"
 "void main() {\n"
-"    TexCoords = vec3(aPos.x, -aPos.y, aPos.z);\n"
-"    gl_Position = projection * view * vec4(aPos, 1.0);\n"
+"    TexCoords = aPos;\n"
+"    vec4 pos = projection * vec4((view * vec4(aPos, 0.0)).xyz, 1.0);\n"
+"    gl_Position = pos;\n"
 "}";
 
 const char* Skybox::fragment_shader_code =
@@ -79,14 +80,17 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 
+    // base_path viene como "../../../shared/assets/sky-cube-map-"
+    // así que los ficheros son:
+    // sky-cube-map-0.jpg ... sky-cube-map-5.jpg
     std::vector<std::string> faces =
     {
-        base_path + "/right.jpg",
-        base_path + "/left.jpg",
-        base_path + "/top.jpg",
-        base_path + "/bottom.jpg",
-        base_path + "/front.jpg",
-        base_path + "/back.jpg"
+        base_path + "0.jpg", // +X
+        base_path + "1.jpg", // -X
+        base_path + "2.jpg", // +Y
+        base_path + "3.jpg", // -Y
+        base_path + "4.jpg", // +Z
+        base_path + "5.jpg"  // -Z
     };
 
     int width, height, channels;
@@ -128,6 +132,7 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
 
     return texID;
 }
+
 
 // ================= CONSTRUCTOR =================
 Skybox::Skybox(const std::string& path)
@@ -173,16 +178,19 @@ void Skybox::render(const Camera& camera)
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
 
+    // Desactivar culling para ver el cubo desde dentro
+    GLboolean cullEnabled = glIsEnabled(GL_CULL_FACE);
+    if (cullEnabled) glDisable(GL_CULL_FACE);
+
     glUseProgram(shader_id);
 
-
-
-    // ===== PROYECCIÓN REAL DE LA CÁMARA =====
     glm::mat4 projection = camera.get_projection_matrix();
+    glm::mat4 view = glm::mat4(glm::mat3(camera.get_view_matrix()));
 
     static GLint viewLoc = glGetUniformLocation(shader_id, "view");
     static GLint projLoc = glGetUniformLocation(shader_id, "projection");
 
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(vao_id);
@@ -192,6 +200,9 @@ void Skybox::render(const Camera& camera)
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(0);
+
+    // Restaurar estado
+    if (cullEnabled) glEnable(GL_CULL_FACE);
 
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);

@@ -8,8 +8,8 @@ Camera::Camera()
 {
     position = glm::vec3(0.0f, 2.0f, 5.0f);
 
-    rotX = 0.0f;
-    rotY = 3.1416f;
+    rotX = 0.0f;        // pitch
+    rotY = 3.1416f;     // yaw
 
     speed = 5.0f;
     sensitivity = 0.002f;
@@ -99,17 +99,21 @@ void Camera::moveDown(float dt)
 }
 
 // =======================
-// ROTACIÓN LIBRE (FPS + SMOOTH)
+// ROTACIÓN LIBRE (FPS + 360°)
 // =======================
 void Camera::rotate(float dx, float dy)
 {
-    rotY += dx * sensitivity;
-    rotX -= dy * sensitivity;
+    rotY += dx * sensitivity;   // yaw → 360° infinitos
+    rotX -= dy * sensitivity;   // pitch
 
-    //CLAMP SUAVE (evita flip completo)
-    const float limit = 1.55f;
+    // Normalizar yaw para evitar overflow
+    const float TWO_PI = 6.28318f;
+    if (rotY > TWO_PI)  rotY -= TWO_PI;
+    if (rotY < 0.0f)    rotY += TWO_PI;
 
-    if (rotX > limit) rotX = limit;
+    // Limitar pitch para evitar flip
+    const float limit = 1.55f; // ~89°
+    if (rotX > limit)  rotX = limit;
     if (rotX < -limit) rotX = -limit;
 }
 
@@ -122,6 +126,8 @@ glm::mat4 Camera::get_view_matrix() const
     getDirection(x, y, z);
 
     glm::vec3 front = glm::normalize(glm::vec3(x, y, z));
+
+    glm::vec3 centeredCamPos(0.f, 5.f, -6.f);
 
     return glm::lookAt(
         position,
