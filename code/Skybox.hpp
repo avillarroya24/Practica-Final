@@ -20,6 +20,7 @@ public:
 
     // Destructor
     ~Skybox();
+    Skybox* skybox;
 
 private:
 

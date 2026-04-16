@@ -85,6 +85,7 @@ namespace udit
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
+
         skybox = std::make_shared<Skybox>("../../shared/assets/sky-cube-map-");
 
 

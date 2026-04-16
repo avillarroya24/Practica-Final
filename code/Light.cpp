@@ -1,21 +1,26 @@
 #include "Light.hpp"
 #include <glm.hpp>
 #include <glad/gl.h>
+#include <string>
 
 // ================= CONSTRUCTOR =================
 Light::Light(LightType t)
     : type(t),
-    position(0.0f, 5.0f, 0.0f),
+    position(0.0f, 50.0f, 0.0f),
+    // Dirección tipo sol, ligeramente inclinada
+    direction(glm::normalize(glm::vec3(-0.4f, -1.0f, -0.25f))),
 
-    // Dirección tipo sol (más natural)
-    direction(glm::normalize(glm::vec3(-0.3f, -1.0f, -0.2f))),
+    // Luz ambiental suave y ligeramente fría
+    ambient(0.22f, 0.22f, 0.25f),
 
-    // Luz más homogénea en toda la escena
-    ambient(0.35f, 0.35f, 0.35f),
-    diffuse(0.9f, 0.9f, 0.9f),
-    specular(0.6f, 0.6f, 0.6f),
+    // Luz difusa cálida tipo sol
+    diffuse(1.0f, 0.95f, 0.85f),
 
-    intensity(1.0f)
+    // Especular limpio y brillante
+    specular(1.0f, 0.95f, 0.9f),
+
+    // Intensidad global
+    intensity(1.4f)
 {
 }
 
@@ -27,7 +32,6 @@ void Light::setPosition(const glm::vec3& pos)
 
 void Light::setDirection(const glm::vec3& dir)
 {
-    // IMPORTANTE: siempre normalizada
     direction = glm::normalize(dir);
 }
 
@@ -92,17 +96,12 @@ void Light::apply(GLuint program, int index)
 {
     std::string base = "lights[" + std::to_string(index) + "]";
 
-    // Si es luz direccional no depende de posición
-    if (type == DIRECTIONAL)
-    {
-        glm::vec3 fakePos(0.0f, 0.0f, 0.0f);
-        glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &fakePos[0]);
-    }
-    else
-    {
-        glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &position[0]);
-    }
+    // Para direccional, la posición no importa: se usa direction
+    glm::vec3 posToSend = (type == DIRECTIONAL)
+        ? glm::vec3(0.0f)
+        : position;
 
+    glUniform3fv(glGetUniformLocation(program, (base + ".position").c_str()), 1, &posToSend[0]);
     glUniform3fv(glGetUniformLocation(program, (base + ".direction").c_str()), 1, &direction[0]);
 
     glUniform3fv(glGetUniformLocation(program, (base + ".ambient").c_str()), 1, &ambient[0]);
