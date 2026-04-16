@@ -1,4 +1,4 @@
-#include "Scene.hpp"
+﻿#include "Scene.hpp"
 #include "Window.hpp"
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>

@@ -33,10 +33,12 @@ namespace udit
         Camera camera;
         Light light;
 
+
         std::shared_ptr<Skybox> skybox;
 
         // ================= ESTADO =================
         float angle;
+        float mixValue = 0.5f;
 
         // ================= HELPERS =================
         GLuint compile_shaders();
