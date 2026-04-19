@@ -17,17 +17,36 @@ namespace udit
         int tex_height = 0;
 
     public:
+        // ============================
+        // CONSTRUCTOR / DESTRUCTOR
+        // ============================
         Texture2D(const std::string& path);
         ~Texture2D();
 
         Texture2D(const Texture2D&) = delete;
         Texture2D& operator=(const Texture2D&) = delete;
 
+        // ============================
+        // ESTADO
+        // ============================
         bool is_ok() const
         {
             return texture_is_loaded;
         }
 
+        bool is_loaded() const
+        {
+            return texture_is_loaded;
+        }
+
+        GLuint id() const
+        {
+            return texture_id;
+        }
+
+        // ============================
+        // BIND
+        // ============================
         bool bind(unsigned int unit) const
         {
             if (!texture_is_loaded)
@@ -37,6 +56,13 @@ namespace udit
             glBindTexture(GL_TEXTURE_2D, texture_id);
             return true;
         }
+
+        // ============================
+        // SISTEMA DE TEXTURAS GLOBALES
+        // ============================
+        static Texture2D* load(const std::string& name, const std::string& path);
+        static Texture2D* get(const std::string& name);
+        static void load_default_textures();
     };
 
 }

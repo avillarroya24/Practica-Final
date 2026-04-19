@@ -6,6 +6,7 @@
 #include "Terrain.hpp"
 #include "Camera.hpp"
 #include "Light.hpp"
+#include "Texture2D.hpp"     // <--- NUEVO
 
 #include <memory>
 #include <string>
@@ -33,8 +34,15 @@ namespace udit
         Camera camera;
         Light light;
 
-
         std::shared_ptr<Skybox> skybox;
+
+        // ================= TEXTURAS =================
+        // (Opcional: puedes almacenar IDs si lo deseas)
+        GLuint tex_circulo = 0;
+        GLuint tex_earth = 0;
+        GLuint tex_luna = 0;
+        GLuint tex_sky6 = 0;
+        GLuint tex_terrain = 0;
 
         // ================= ESTADO =================
         float angle;
@@ -44,6 +52,8 @@ namespace udit
         GLuint compile_shaders();
         void show_compilation_error(GLuint shader_id);
         void show_linkage_error(GLuint program_id);
+
+        void load_textures();   // <--- NUEVO
 
     public:
 

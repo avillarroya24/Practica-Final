@@ -2,6 +2,7 @@
 #include "Camera.hpp"
 #include "Light.hpp"
 #include "Skybox.hpp"
+#include "Texture2D.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -24,14 +25,17 @@ namespace udit
         "uniform mat4 projection_matrix;\n"
         "layout(location = 0) in vec3 vertex_coordinates;\n"
         "layout(location = 1) in vec3 vertex_normal;\n"
+        "layout(location = 2) in vec2 vertex_uv;\n"
         "out vec3 frag_color;\n"
         "out vec3 normal;\n"
         "out vec3 frag_pos;\n"
+        "out vec2 texcoord;\n"
         "void main() {\n"
         "    vec4 world_pos = model_view_matrix * vec4(vertex_coordinates,1.0);\n"
         "    gl_Position = projection_matrix * world_pos;\n"
         "    normal = mat3(transpose(inverse(model_view_matrix))) * vertex_normal;\n"
         "    frag_pos = vec3(world_pos);\n"
+        "    texcoord = vertex_uv;\n"
         "    vec3 n = normalize(vertex_normal);\n"
         "    n = n * 0.5 + 0.3;\n"
         "    frag_color = n;\n"
@@ -42,7 +46,10 @@ namespace udit
         "in vec3 frag_color;\n"
         "in vec3 normal;\n"
         "in vec3 frag_pos;\n"
+        "in vec2 texcoord;\n"
         "out vec4 fragment_color;\n"
+        "uniform sampler2D diffuse_map;\n"
+        "uniform bool use_texture;\n"
         "uniform vec3 light_pos;\n"
         "uniform vec3 view_pos;\n"
         "void main() {\n"
@@ -59,7 +66,10 @@ namespace udit
         "    vec3 specular = specular_strength * spec * vec3(1.0);\n"
         "    vec3 result = ambient + diffuse + specular;\n"
         "    result = pow(result, vec3(1.3));\n"
-        "    fragment_color = vec4(result, 0.4);\n"
+        "    if (use_texture)\n"
+        "        fragment_color = vec4(result, 1.0) * texture(diffuse_map, texcoord);\n"
+        "    else\n"
+        "        fragment_color = vec4(result, 1.0);\n"
         "}";
 
     // ==========================
@@ -85,9 +95,10 @@ namespace udit
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
-
         skybox = std::make_shared<Skybox>("../../shared/assets/sky-cube-map-");
 
+        // Cargar texturas 2D
+        Texture2D::load_default_textures();
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
@@ -102,6 +113,9 @@ namespace udit
 
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
+
+        // sampler
+        glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
 
         resize(width, height);
     }
@@ -121,36 +135,25 @@ namespace udit
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // ============================
-        // 1. DIBUJAR SKYBOX PRIMERO
-        // ============================
+        skybox->render(camera);
 
-        skybox->render(camera);     // <-- usa su propio shader
-
-        // ============================
-        // 2. ACTIVAR SHADER PRINCIPAL
-        // ============================
         glUseProgram(program_id);
 
-        // ============================
-        // 3. MATRIZ DE VISTA
-        // ============================
         glm::mat4 I(1.0f);
         glm::mat4 view = camera.get_view_matrix();
 
-        // ============================================================
-        // ----------------------   T E R R E N O   --------------------
-        // ============================================================
+        // ============================
+        // TERRENO
+        // ============================
         glm::mat4 model = glm::translate(I, glm::vec3(-100.f, -5.f, -200.f));
         glm::mat4 model_view = view * model;
 
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view));
         terrain.Draw();
 
-
-        // ============================================================
-        // -------------------   C U B O   G R A N D E   --------------
-        // ============================================================
+        // ============================
+        // CUBO GRANDE
+        // ============================
         glm::mat4 big_cube_model = make_model(
             I,
             glm::vec3(0.f, 0.f, -6.f),
@@ -160,23 +163,15 @@ namespace udit
         );
 
         glm::mat4 big_cube_mv = view * big_cube_model;
-
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube_mv));
 
         glDisable(GL_BLEND);
 
-        cube.set_color(glm::vec3(
-            0.5f + 0.5f * sin(angle),
-            0.5f + 0.5f * cos(angle),
-            0.5f + 0.5f * sin(angle * 0.5f)
-        ));
-
         cube.render();
 
-
-        // ============================================================
-        // -------------------   C U B O   P E Q U E Ñ O   ------------
-        // ============================================================
+        // ============================
+        // CUBO PEQUEÑO
+        // ============================
         glm::mat4 small_cube_model = I;
         small_cube_model = glm::translate(small_cube_model, glm::vec3(0.f, 0.f, -6.f));
         small_cube_model = glm::rotate(small_cube_model, angle * 2.f, glm::vec3(0, 1, 0));
@@ -185,10 +180,10 @@ namespace udit
         small_cube_model = glm::scale(small_cube_model, glm::vec3(0.35f));
 
         glm::mat4 small_cube_mv = view * small_cube_model;
-
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube_mv));
 
         glEnable(GL_BLEND);
+        cube.enable_texture(false);
 
         cube.set_color(glm::vec4(
             0.5f + 0.5f * cos(angle * 1.5f),
@@ -202,7 +197,6 @@ namespace udit
         glDisable(GL_BLEND);
     }
 
-
     // ==========================
     // ===== CONTROLES ==========
     // ==========================
@@ -214,9 +208,6 @@ namespace udit
     void Scene::moveDown(float dt) { camera.moveDown(dt); }
     void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
 
-    // ==========================
-    // ===== MOUSE ============
-    // ==========================
     void Scene::handleMouse(float dx, float dy, float dt)
     {
         camera.rotate(dx, dy);
@@ -229,7 +220,7 @@ namespace udit
         glm::vec3 forward = glm::normalize(glm::vec3(dirX, dirY, dirZ));
         glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
-        if (std::fabs(dy) > 1.0f)
+        if (fabs(dy) > 1.0f)
         {
             camera.setPosition(
                 camera.getX() + forward.x * speed * (dy < 0 ? 1 : -1),
@@ -238,7 +229,7 @@ namespace udit
             );
         }
 
-        if (std::fabs(dx) > 1.0f)
+        if (fabs(dx) > 1.0f)
         {
             camera.setPosition(
                 camera.getX() + right.x * speed * (dx > 0 ? 1 : -1),
