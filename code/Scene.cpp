@@ -17,7 +17,7 @@ namespace udit
     using namespace std;
 
     // ==========================
-    // ===== SHADERS (ENTEROS) ==
+    // ===== SHADERS ============
     // ==========================
     const string Scene::vertex_shader_code =
         "#version 330 core\n"
@@ -73,6 +73,20 @@ namespace udit
         "}";
 
     // ==========================
+    // ===== SCENE CONSTANTS ====
+    // ==========================
+    namespace
+    {
+        constexpr glm::vec3 TERRAIN_OFFSET = glm::vec3(-100.f, -5.f, -200.f);
+        constexpr glm::vec3 MAIN_CUBE_POS = glm::vec3(0.f, 0.f, -6.f);
+        constexpr float MAIN_CUBE_SCALE = 1.2f;
+
+        constexpr glm::vec3 SMALL_CUBE_BASE_POS = glm::vec3(0.f, 0.f, -6.f);
+        constexpr glm::vec3 SMALL_CUBE_OFFSET = glm::vec3(4.f, 0.f, 0.f);
+        constexpr float SMALL_CUBE_SCALE = 0.35f;
+    }
+
+    // ==========================
     // ===== HELPERS ============
     // ==========================
     static glm::mat4 make_model(
@@ -97,7 +111,6 @@ namespace udit
     {
         skybox = std::make_shared<Skybox>("../../shared/assets/sky-cube-map-");
 
-        // Cargar texturas 2D
         Texture2D::load_default_textures();
 
         glEnable(GL_CULL_FACE);
@@ -114,14 +127,13 @@ namespace udit
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
-        // sampler
         glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
 
         resize(width, height);
     }
 
     // ==========================
-    // ===== UPDATE ============
+    // ===== UPDATE =============
     // ==========================
     void Scene::update()
     {
@@ -129,7 +141,7 @@ namespace udit
     }
 
     // ==========================
-    // ===== RENDER ============
+    // ===== RENDER =============
     // ==========================
     void Scene::render()
     {
@@ -142,45 +154,44 @@ namespace udit
         glm::mat4 I(1.0f);
         glm::mat4 view = camera.get_view_matrix();
 
-        // ============================
-        // TERRENO
-        // ============================
-        glm::mat4 model = glm::translate(I, glm::vec3(-100.f, -5.f, -200.f));
-        glm::mat4 model_view = view * model;
+        // ==========================
+        // TERRAIN (coherente en escala mundo)
+        // ==========================
+        glm::mat4 terrain_model = glm::translate(I, TERRAIN_OFFSET);
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
+            glm::value_ptr(view * terrain_model));
 
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(model_view));
         terrain.Draw();
 
-        // ============================
-        // CUBO GRANDE
-        // ============================
-        glm::mat4 big_cube_model = make_model(
+        // ==========================
+        // MAIN CUBE (centro escena)
+        // ==========================
+        glm::mat4 main_cube_model = make_model(
             I,
-            glm::vec3(0.f, 0.f, -6.f),
+            MAIN_CUBE_POS,
             angle,
             glm::vec3(0.f, 1.f, 0.f),
-            glm::vec3(1.2f)
+            glm::vec3(MAIN_CUBE_SCALE)
         );
 
-        glm::mat4 big_cube_mv = view * big_cube_model;
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(big_cube_mv));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
+            glm::value_ptr(view * main_cube_model));
 
         glDisable(GL_BLEND);
-
         cube.render();
 
-        // ============================
-        // CUBO PEQUEÑO
-        // ============================
+        // ==========================
+        // SMALL ORBITING CUBE
+        // ==========================
         glm::mat4 small_cube_model = I;
-        small_cube_model = glm::translate(small_cube_model, glm::vec3(0.f, 0.f, -6.f));
+        small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_BASE_POS);
         small_cube_model = glm::rotate(small_cube_model, angle * 2.f, glm::vec3(0, 1, 0));
-        small_cube_model = glm::translate(small_cube_model, glm::vec3(4.f, 0.f, 0.f));
+        small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_OFFSET);
         small_cube_model = glm::rotate(small_cube_model, angle * 3.f, glm::vec3(1, 1, 0));
-        small_cube_model = glm::scale(small_cube_model, glm::vec3(0.35f));
+        small_cube_model = glm::scale(small_cube_model, glm::vec3(SMALL_CUBE_SCALE));
 
-        glm::mat4 small_cube_mv = view * small_cube_model;
-        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(small_cube_mv));
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
+            glm::value_ptr(view * small_cube_model));
 
         glEnable(GL_BLEND);
         cube.enable_texture(false);
@@ -198,7 +209,7 @@ namespace udit
     }
 
     // ==========================
-    // ===== CONTROLES ==========
+    // ===== CONTROLS ===========
     // ==========================
     void Scene::moveForward(float dt) { camera.moveForward(dt); }
     void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
@@ -240,7 +251,7 @@ namespace udit
     }
 
     // ==========================
-    // ===== RESIZE ============
+    // ===== RESIZE =============
     // ==========================
     void Scene::resize(unsigned width, unsigned height)
     {
