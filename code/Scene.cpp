@@ -50,6 +50,7 @@ namespace udit
         "out vec4 fragment_color;\n"
         "uniform sampler2D diffuse_map;\n"
         "uniform bool use_texture;\n"
+        "uniform float uv_scale;\n" // AÑADIDO
         "uniform vec3 light_pos;\n"
         "uniform vec3 view_pos;\n"
         "void main() {\n"
@@ -67,14 +68,11 @@ namespace udit
         "    vec3 result = ambient + diffuse + specular;\n"
         "    result = pow(result, vec3(1.3));\n"
         "    if (use_texture)\n"
-        "        fragment_color = vec4(result, 1.0) * texture(diffuse_map, texcoord);\n"
+        "        fragment_color = vec4(result, 1.0) * texture(diffuse_map, texcoord * uv_scale);\n" // AÑADIDO
         "    else\n"
         "        fragment_color = vec4(result, 1.0);\n"
         "}";
 
-    // ==========================
-    // ===== SCENE CONSTANTS ====
-    // ==========================
     namespace
     {
         constexpr glm::vec3 TERRAIN_OFFSET = glm::vec3(-100.f, -5.f, -200.f);
@@ -86,9 +84,6 @@ namespace udit
         constexpr float SMALL_CUBE_SCALE = 0.35f;
     }
 
-    // ==========================
-    // ===== HELPERS ============
-    // ==========================
     static glm::mat4 make_model(
         const glm::mat4& base,
         const glm::vec3& t,
@@ -103,9 +98,6 @@ namespace udit
         return m;
     }
 
-    // ==========================
-    // ===== CONSTRUCTOR ========
-    // ==========================
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
@@ -128,21 +120,16 @@ namespace udit
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
 
         glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
+        glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f); // AÑADIDO
 
         resize(width, height);
     }
 
-    // ==========================
-    // ===== UPDATE =============
-    // ==========================
     void Scene::update()
     {
         angle += 0.01f;
     }
 
-    // ==========================
-    // ===== RENDER =============
-    // ==========================
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -154,22 +141,55 @@ namespace udit
         glm::mat4 I(1.0f);
         glm::mat4 view = camera.get_view_matrix();
 
-        // ==========================
-        // TERRAIN (coherente en escala mundo)
-        // ==========================
+        int useTexLoc = glGetUniformLocation(program_id, "use_texture");
+
+        // =========================
+        // ===== TERRAIN ===========
+        // =========================
+        auto terrainTex = Texture2D::get("terrain");
+
+        if (terrainTex)
+        {
+            terrainTex->bind(0);
+            glUniform1i(useTexLoc, 1);
+            glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 8.0f);
+        }
+        else
+        {
+            glUniform1i(useTexLoc, 0);
+        }
+
         glm::mat4 terrain_model = glm::translate(I, TERRAIN_OFFSET);
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * terrain_model));
 
         terrain.Draw();
 
-        // ==========================
-        // MAIN CUBE (centro escena)
-        // ==========================
+        // =========================
+        // ===== MAIN CUBE =========
+        // =========================
+        auto earthTex = Texture2D::get("earth");
+
+        if (earthTex)
+        {
+            cube.set_texture(earthTex->get_id());   // asigna textura al cubo
+            cube.enable_texture(true);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, earthTex->get_id());
+
+            glUniform1i(useTexLoc, 1);
+        }
+        else
+        {
+            cube.enable_texture(false);
+            glUniform1i(useTexLoc, 0);
+        }
+
         glm::mat4 main_cube_model = make_model(
             I,
             MAIN_CUBE_POS,
-            angle,
+            angle * 0.5f,   // más lento = más realista
             glm::vec3(0.f, 1.f, 0.f),
             glm::vec3(MAIN_CUBE_SCALE)
         );
@@ -177,12 +197,13 @@ namespace udit
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * main_cube_model));
 
-        glDisable(GL_BLEND);
         cube.render();
 
-        // ==========================
-        // SMALL ORBITING CUBE
-        // ==========================
+        // =========================
+        // ===== SMALL CUBE ========
+        // =========================
+        glUniform1i(useTexLoc, 0); // sin textura explícito
+
         glm::mat4 small_cube_model = I;
         small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_BASE_POS);
         small_cube_model = glm::rotate(small_cube_model, angle * 2.f, glm::vec3(0, 1, 0));
@@ -193,7 +214,6 @@ namespace udit
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * small_cube_model));
 
-        glEnable(GL_BLEND);
         cube.enable_texture(false);
 
         cube.set_color(glm::vec4(
@@ -202,6 +222,12 @@ namespace udit
             0.5f + 0.5f * cos(angle * 2.0f),
             0.5f
         ));
+
+        small_cube_model = glm::rotate(
+            small_cube_model,
+            angle * 0.8f,
+            glm::vec3(0, 1, 0)
+        );
 
         cube.render();
 

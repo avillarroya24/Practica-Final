@@ -6,15 +6,14 @@
 
 namespace udit
 {
-
     class Texture2D
     {
     private:
         GLuint texture_id = 0;
-        bool texture_is_loaded = false;
+        bool loaded = false;
 
-        int tex_width = 0;
-        int tex_height = 0;
+        int width = 0;
+        int height = 0;
 
     public:
         // ============================
@@ -27,44 +26,27 @@ namespace udit
         Texture2D& operator=(const Texture2D&) = delete;
 
         // ============================
-        // ESTADO
+        // INFO
         // ============================
-        bool is_ok() const
-        {
-            return texture_is_loaded;
-        }
+        bool is_loaded() const { return loaded; }
 
-        bool is_loaded() const
-        {
-            return texture_is_loaded;
-        }
+        GLuint get_id() const { return texture_id; }
 
-        GLuint id() const
-        {
-            return texture_id;
-        }
+        int get_width() const { return width; }
+        int get_height() const { return height; }
 
         // ============================
-        // BIND
+        // BIND CORRECTO (CLAVE)
         // ============================
-        bool bind(unsigned int unit) const
-        {
-            if (!texture_is_loaded)
-                return false;
-
-            glActiveTexture(GL_TEXTURE0 + unit);
-            glBindTexture(GL_TEXTURE_2D, texture_id);
-            return true;
-        }
+        void bind(unsigned int slot = 0) const;
 
         // ============================
-        // SISTEMA DE TEXTURAS GLOBALES
+        // GLOBAL SYSTEM
         // ============================
         static Texture2D* load(const std::string& name, const std::string& path);
         static Texture2D* get(const std::string& name);
         static void load_default_textures();
     };
-
 }
 
 #endif

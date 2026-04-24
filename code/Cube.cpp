@@ -104,10 +104,14 @@ namespace udit
     {
         glBindVertexArray(vao_id);
 
-        if (use_texture)
+        if (use_texture && texture_id != 0)
         {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture_id);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr);

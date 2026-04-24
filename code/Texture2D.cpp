@@ -1,4 +1,4 @@
-#include "Texture2D.hpp"
+ï»¿#include "Texture2D.hpp"
 
 #include <SOIL2.h>
 #include <iostream>
@@ -7,37 +7,52 @@
 namespace udit
 {
     // ============================
-    // ALMACÉN GLOBAL DE TEXTURAS
+    // CACHE GLOBAL DE TEXTURAS
     // ============================
     static std::unordered_map<std::string, Texture2D*> texture_bank;
 
     // ============================
-    // CARGA INDIVIDUAL
+    // CONSTRUCTOR
     // ============================
     Texture2D::Texture2D(const std::string& path)
     {
-        int channels;
+        loaded = false;
+
+        int channels = 0;
 
         unsigned char* data = SOIL_load_image(
             path.c_str(),
-            &tex_width,
-            &tex_height,
+            &width,
+            &height,
             &channels,
             SOIL_LOAD_RGBA
         );
 
         if (!data)
         {
-            std::cerr << "Error cargando textura: " << path << std::endl;
-            texture_is_loaded = false;
+            std::cerr << "[ERROR] No se pudo cargar textura: " << path << std::endl;
+
+            unsigned char white[4] = { 255, 255, 255, 255 };
+            width = height = 1;
+
+            glGenTextures(1, &texture_id);
+            glBindTexture(GL_TEXTURE_2D, texture_id);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, white);
+
+            loaded = true;
             return;
         }
 
         glGenTextures(1, &texture_id);
         glBindTexture(GL_TEXTURE_2D, texture_id);
 
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -45,8 +60,8 @@ namespace udit
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            tex_width,
-            tex_height,
+            width,
+            height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
@@ -55,9 +70,14 @@ namespace udit
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         SOIL_free_image_data(data);
 
-        texture_is_loaded = true;
+        loaded = true;
+
+        std::cout << "[OK] Textura cargada: " << path
+            << " (" << width << "x" << height << ")\n";
     }
 
     // ============================
@@ -65,17 +85,29 @@ namespace udit
     // ============================
     Texture2D::~Texture2D()
     {
-        if (texture_is_loaded)
-        {
+        if (texture_id != 0)
             glDeleteTextures(1, &texture_id);
-        }
     }
 
     // ============================
-    // CARGA CENTRALIZADA
+    // BIND SEGURO
+    // ============================
+    void Texture2D::bind(unsigned int slot) const
+    {
+        if (!loaded) return;
+
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+    }
+
+    // ============================
+    // LOAD GLOBAL (CACHE)
     // ============================
     Texture2D* Texture2D::load(const std::string& name, const std::string& path)
     {
+        if (texture_bank.count(name))
+            return texture_bank[name];
+
         Texture2D* tex = new Texture2D(path);
 
         if (tex->is_loaded())
@@ -89,28 +121,31 @@ namespace udit
     }
 
     // ============================
-    // ACCESO A TEXTURAS
+    // GET GLOBAL
     // ============================
     Texture2D* Texture2D::get(const std::string& name)
     {
-        if (texture_bank.count(name))
-            return texture_bank[name];
+        auto it = texture_bank.find(name);
 
+        if (it != texture_bank.end())
+            return it->second;
+
+        std::cerr << "[WARN] Textura no encontrada: " << name << std::endl;
         return nullptr;
     }
 
     // ============================
-    // CARGA DE TUS TEXTURAS AQUÍ
+    // DEFAULT TEXTURES
     // ============================
     void Texture2D::load_default_textures()
     {
-        load("circulo", "../../shared/textures/circulo-oscuro.png");
-        load("earth", "../../shared/textures/earth_daymap.png");
-        load("luna", "../../shared/textures/luna.png");
-        load("sky6", "../../shared/textures/sky-cube-map-6.png");
-        load("terrain", "../../shared/textures/terrain.png");
+        std::cout << "Cargando texturas...\n";
 
-        std::cout << "Texturas 2D cargadas correctamente." << std::endl;
+        load("circulo", "textures/circulo-oscuro.png");
+        load("earth", "textures/earth_daymap.png");
+        load("luna", "textures/luna.png");
+        load("terrain", "textures/terrain.png");
+
+        std::cout << "Texturas cargadas.\n";
     }
-
 }
