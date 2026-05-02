@@ -83,15 +83,28 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
 
     std::vector<std::string> faces =
     {
-        base_path + "1.png", // +X
+        base_path + "0.png", // +X
         base_path + "1.png", // -X
-        base_path + "1.png", // +Y
-        base_path + "1.png", // -Y
-        base_path + "1.png", // +Z
-        base_path + "1.png"  // -Z
+        base_path + "2.png", // +Y
+        base_path + "3.png", // -Y
+        base_path + "4.png", // +Z
+        base_path + "5.png"  // -Z
     };
 
     int width, height, channels;
+
+    // =========================
+    // ORDEN DE CARAS (IMPORTANTE)
+    // =========================
+    static const GLenum targets[6] =
+    {
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+    };
 
     for (unsigned int i = 0; i < faces.size(); i++)
     {
@@ -109,7 +122,7 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
         }
 
         glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            targets[i],
             0,
             GL_RGBA,
             width, height,

@@ -68,7 +68,7 @@ namespace udit
         "    vec3 result = ambient + diffuse + specular;\n"
         "    result = pow(result, vec3(1.3));\n"
         "    if (use_texture)\n"
-        "        fragment_color = vec4(result, 1.0) * texture(diffuse_map, texcoord * uv_scale);\n" // AÑADIDO
+        "        fragment_color = texture(diffuse_map, texcoord);\n" // AÑADIDO
         "    else\n"
         "        fragment_color = vec4(result, 1.0);\n"
         "}";
@@ -103,7 +103,7 @@ namespace udit
     {
         skybox = std::make_shared<Skybox>("../../shared/assets/sky-cube-map-");
 
-        Texture2D::load_default_textures();
+        load_textures();
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
@@ -118,12 +118,19 @@ namespace udit
 
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
+        glUniform1i(glGetUniformLocation(program_id, "use_texture"), 1); //Texturas
 
         glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
         glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f); // AÑADIDO
 
         resize(width, height);
     }
+
+    void Scene::load_textures() 
+    {
+        texture_wood = make_shared <Texture2D>("../../shared/assets/wood.png");
+    }
+
 
     void Scene::update()
     {
@@ -202,7 +209,8 @@ namespace udit
         // =========================
         // ===== SMALL CUBE ========
         // =========================
-        glUniform1i(useTexLoc, 0); // sin textura explícito
+        glUniform1i(useTexLoc, 1); // sin textura explícito
+        texture_wood->bind();
 
         glm::mat4 small_cube_model = I;
         small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_BASE_POS);
@@ -230,6 +238,8 @@ namespace udit
         );
 
         cube.render();
+        glUniform1i(useTexLoc, 0); //Se deshabilita la textura
+
 
         glDisable(GL_BLEND);
     }

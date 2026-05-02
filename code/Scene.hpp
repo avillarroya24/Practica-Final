@@ -35,6 +35,7 @@ namespace udit
         Light light;
 
         std::shared_ptr<Skybox> skybox;
+        std::shared_ptr<Texture2D> texture_wood;
 
         // ================= TEXTURAS =================
         // (Opcional: puedes almacenar IDs si lo deseas)
