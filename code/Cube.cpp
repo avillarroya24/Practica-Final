@@ -102,7 +102,13 @@ namespace udit
     // ================= RENDER =================
     void Cube::render()
     {
+        // GRAFO DE ESCENA: obtener transform del nodo
+        glm::mat4 model = transform.get_transform_matrix();
+
         glBindVertexArray(vao_id);
+
+        // (IMPORTANTE: aquí normalmente iría al shader)
+        // glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         if (use_texture && texture_id != 0)
         {
@@ -117,6 +123,10 @@ namespace udit
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr);
 
         glBindVertexArray(0);
+
+        // GRAFO DE ESCENA: render hijos
+        for (auto* child : children)
+            child->render();
     }
 
 }

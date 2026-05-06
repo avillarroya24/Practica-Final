@@ -1,18 +1,25 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include "Tranform.hpp"
-#include "Light.hpp"
+#include "Transform.hpp"
+#include <vector>
 
 class Node
 {
 public:
     Transform transform;
 
+    Node* parent = nullptr;
+    std::vector<Node*> children;
+
+    virtual ~Node() {}
+
+    // IMPORTANTE: pueden ser default si no quieres override obligatorio
     virtual void update(float deltaTime) {}
     virtual void render() {}
 
-    void set_parent(Node& node);
+    void set_parent(Node* node);
+    void add_child(Node* child);
 };
 
 #endif

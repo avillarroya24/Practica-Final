@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Cube.hpp"
+#include "Node.hpp"
 #include "Skybox.hpp"
 #include "Shader_Program.hpp"
 #include "Terrain.hpp"

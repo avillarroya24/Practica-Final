@@ -1,8 +1,21 @@
 #include "Node.hpp"
 
-Transform transform;
-
-void Node::set_parent(Node& node)
+void Node::set_parent(Node* node)
 {
-    transform.parent = &node.transform;
+    parent = node;
+
+    if (node)
+    {
+        node->children.push_back(this);
+        transform.parent = &node->transform;
+    }
+}
+
+void Node::add_child(Node* child)
+{
+    if (!child) return;
+
+    children.push_back(child);
+    child->parent = this;
+    child->transform.parent = &transform;
 }
