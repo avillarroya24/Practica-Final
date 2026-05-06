@@ -30,7 +30,7 @@
     <ClInclude Include="..\..\code\Scene.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\code\Tranform.hpp">
+    <ClInclude Include="..\..\code\Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\code\Window.hpp">
@@ -92,7 +92,7 @@
     <ClCompile Include="..\..\code\Texture_Cube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\code\Tranform.cpp">
+    <ClCompile Include="..\..\code\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\code\Window.cpp">
