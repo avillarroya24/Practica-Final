@@ -209,6 +209,8 @@ namespace udit
         // =========================
         // ===== SMALL CUBE ========
         // =========================
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUniform1i(useTexLoc, 1); // sin textura explícito
         texture_wood->bind();
 
@@ -239,7 +241,6 @@ namespace udit
 
         cube.render();
         glUniform1i(useTexLoc, 0); //Se deshabilita la textura
-
 
         glDisable(GL_BLEND);
     }

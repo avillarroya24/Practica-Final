@@ -1,12 +1,13 @@
 #ifndef CUBE_HPP
 #define CUBE_HPP
 
+#include "Node.hpp"
 #include <glad/gl.h>
 #include <glm.hpp>
 
 namespace udit
 {
-    class Cube
+    class Cube : public Node
     {
     private:
 
