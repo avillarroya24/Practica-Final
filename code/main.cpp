@@ -107,6 +107,7 @@ int main(int, char* [])
         scene.update();
         scene.render();
 
+
         window.swap_buffers();
 
     } while (!exit);

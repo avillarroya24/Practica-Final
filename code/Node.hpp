@@ -17,6 +17,7 @@ public:
     // IMPORTANTE: pueden ser default si no quieres override obligatorio
     virtual void update(float deltaTime) {}
     virtual void render() {}
+    void traverse(float deltaTime);
 
     void set_parent(Node* node);
     void add_child(Node* child);
