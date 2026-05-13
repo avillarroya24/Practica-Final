@@ -1,13 +1,14 @@
 ﻿#pragma once
 
 #include "Cube.hpp"
+#include "Model.hpp"
 #include "Node.hpp"
 #include "Skybox.hpp"
 #include "Shader_Program.hpp"
 #include "Terrain.hpp"
 #include "Camera.hpp"
 #include "Light.hpp"
-#include "Texture2D.hpp"     // <--- NUEVO
+#include "Texture2D.hpp"
 
 #include <memory>
 #include <string>
@@ -23,6 +24,11 @@ namespace udit
         // ================= SHADERS =================
         static const std::string vertex_shader_code;
         static const std::string fragment_shader_code;
+        // Añade esto a los miembros privados de tu Scene.hpp
+        std::shared_ptr<Node> root;
+        std::shared_ptr<Model> terrain_node;
+        std::shared_ptr<Model> earth_node;
+        std::shared_ptr<Model> moon_node;
 
         GLuint program_id;
 

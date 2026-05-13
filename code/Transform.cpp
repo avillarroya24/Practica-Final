@@ -2,22 +2,25 @@
 
 mat4 Transform::get_transform_matrix() const
 {
-    mat4 model = mat4(1.0f);
+    // 1. Creamos la matriz identidad
+    mat4 local_matrix = mat4(1.0f);
 
-    // 1. Traslación
-    model = glm::translate(model, position);
+    // 2. Aplicamos transformaciones locales (Orden: Traslación * Rotación * Escala)
+    local_matrix = glm::translate(local_matrix, position);
 
-    // 2. Rotación (IMPORTANTE: convertir a radianes)
-    model = glm::rotate(model, glm::radians(rotation.x), vec3(1, 0, 0));
-    model = glm::rotate(model, glm::radians(rotation.y), vec3(0, 1, 0));
-    model = glm::rotate(model, glm::radians(rotation.z), vec3(0, 0, 1));
+    // Rotamos en los tres ejes (X, Y, Z) convirtiendo grados a radianes
+    local_matrix = glm::rotate(local_matrix, glm::radians(rotation.x), vec3(1.0f, 0.0f, 0.0f));
+    local_matrix = glm::rotate(local_matrix, glm::radians(rotation.y), vec3(0.0f, 1.0f, 0.0f));
+    local_matrix = glm::rotate(local_matrix, glm::radians(rotation.z), vec3(0.0f, 0.0f, 1.0f));
 
-    // 3. Escala
-    model = glm::scale(model, scale);
+    local_matrix = glm::scale(local_matrix, scale);
 
-    // 4. Jerarquía (grafo de escena)
+    // 3. Si hay un padre, multiplicamos su matriz global por nuestra matriz local
+    // Esto propaga las transformaciones hacia abajo en el grafo de escena
     if (parent)
-        return parent->get_transform_matrix() * model;
+    {
+        return parent->get_transform_matrix() * local_matrix;
+    }
 
-    return model;
+    return local_matrix;
 }

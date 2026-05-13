@@ -3,6 +3,7 @@
 
 #include "Transform.hpp"
 #include <vector>
+#include <algorithm> // Para std::find
 
 class Node
 {
@@ -14,9 +15,11 @@ public:
 
     virtual ~Node() {}
 
-    // IMPORTANTE: pueden ser default si no quieres override obligatorio
+    // Estos métodos se sobreescriben en Model, Camera, etc.
     virtual void update(float deltaTime) {}
     virtual void render() {}
+
+    // El motor del grafo
     void traverse(float deltaTime);
 
     void set_parent(Node* node);
