@@ -14,6 +14,7 @@
     <ClInclude Include="..\..\code\Camera.hpp" />
     <ClInclude Include="..\..\code\Cube.hpp" />
     <ClInclude Include="..\..\code\Light.hpp" />
+    <ClInclude Include="..\..\code\Material.hpp" />
     <ClInclude Include="..\..\code\Mesh.hpp" />
     <ClInclude Include="..\..\code\Model.hpp" />
     <ClInclude Include="..\..\code\Node.hpp" />
@@ -24,7 +25,6 @@
     <ClInclude Include="..\..\code\Texture_Cube.hpp" />
     <ClInclude Include="..\..\code\Transform.hpp" />
     <ClInclude Include="..\..\code\Window.hpp" />
-    <ClInclude Include="Material.hpp" />
     <ClInclude Include="Shader_Program.hpp" />
   </ItemGroup>
   <ItemGroup>
