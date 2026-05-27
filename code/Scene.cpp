@@ -50,7 +50,7 @@ namespace udit
         "out vec4 fragment_color;\n"
         "uniform sampler2D diffuse_map;\n"
         "uniform bool use_texture;\n"
-        "uniform float uv_scale;\n" // AÑADIDO
+        "uniform float uv_scale;\n"
         "uniform vec3 light_pos;\n"
         "uniform vec3 view_pos;\n"
         "void main() {\n"
@@ -68,7 +68,7 @@ namespace udit
         "    vec3 result = ambient + diffuse + specular;\n"
         "    result = pow(result, vec3(1.3));\n"
         "    if (use_texture)\n"
-        "        fragment_color = texture(diffuse_map, texcoord);\n" // AÑADIDO
+        "        fragment_color = texture(diffuse_map, texcoord);\n"
         "    else\n"
         "        fragment_color = vec4(result, 1.0);\n"
         "}";
@@ -121,7 +121,7 @@ namespace udit
         glUniform1i(glGetUniformLocation(program_id, "use_texture"), 1); //Texturas
 
         glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
-        glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f); // AÑADIDO
+        glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f);
 
         resize(width, height);
     }
@@ -209,8 +209,9 @@ namespace udit
         // =========================
         // ===== SMALL CUBE ========
         // =========================
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
         glUniform1i(useTexLoc, 1); // sin textura explícito
         texture_wood->bind();
 
@@ -230,7 +231,7 @@ namespace udit
             0.5f + 0.5f * cos(angle * 1.5f),
             0.5f + 0.5f * sin(angle * 0.7f),
             0.5f + 0.5f * cos(angle * 2.0f),
-            0.5f
+            0.25f
         ));
 
         small_cube_model = glm::rotate(
@@ -242,6 +243,7 @@ namespace udit
         cube.render();
         glUniform1i(useTexLoc, 0); //Se deshabilita la textura
 
+        glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
     }
 

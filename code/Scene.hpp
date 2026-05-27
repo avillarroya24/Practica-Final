@@ -61,7 +61,7 @@ namespace udit
         void show_compilation_error(GLuint shader_id);
         void show_linkage_error(GLuint program_id);
 
-        void load_textures();   // <--- NUEVO
+        void load_textures(); //Cargar texturas
 
     public:
 

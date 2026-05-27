@@ -6,14 +6,8 @@
 
 namespace udit
 {
-    // ============================
-    // CACHE GLOBAL DE TEXTURAS
-    // ============================
     static std::unordered_map<std::string, Texture2D*> texture_bank;
 
-    // ============================
-    // CONSTRUCTOR
-    // ============================
     Texture2D::Texture2D(const std::string& path)
     {
         loaded = false;
@@ -25,7 +19,7 @@ namespace udit
             &width,
             &height,
             &channels,
-            SOIL_LOAD_RGBA
+            SOIL_LOAD_AUTO   // 🔥 IMPORTANTE: respeta formato real
         );
 
         if (!data)
@@ -38,8 +32,13 @@ namespace udit
             glGenTextures(1, &texture_id);
             glBindTexture(GL_TEXTURE_2D, texture_id);
 
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, white);
+
+            glBindTexture(GL_TEXTURE_2D, 0);
 
             loaded = true;
             return;
@@ -50,23 +49,31 @@ namespace udit
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
 
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
-            GL_RGBA,
+            format,
             width,
             height,
             0,
-            GL_RGBA,
+            format,
             GL_UNSIGNED_BYTE,
             data
         );
+
+        // 🔥 WRAP seguro
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        // 🔥 FILTROS correctos
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // 🔥 FIX mipmaps en drivers modernos
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -77,21 +84,16 @@ namespace udit
         loaded = true;
 
         std::cout << "[OK] Textura cargada: " << path
-            << " (" << width << "x" << height << ")\n";
+            << " (" << width << "x" << height << ", "
+            << channels << " canales)\n";
     }
 
-    // ============================
-    // DESTRUCTOR
-    // ============================
     Texture2D::~Texture2D()
     {
         if (texture_id != 0)
             glDeleteTextures(1, &texture_id);
     }
 
-    // ============================
-    // BIND SEGURO
-    // ============================
     void Texture2D::bind(unsigned int slot) const
     {
         if (!loaded) return;
@@ -100,9 +102,6 @@ namespace udit
         glBindTexture(GL_TEXTURE_2D, texture_id);
     }
 
-    // ============================
-    // LOAD GLOBAL (CACHE)
-    // ============================
     Texture2D* Texture2D::load(const std::string& name, const std::string& path)
     {
         if (texture_bank.count(name))
@@ -120,9 +119,6 @@ namespace udit
         return nullptr;
     }
 
-    // ============================
-    // GET GLOBAL
-    // ============================
     Texture2D* Texture2D::get(const std::string& name)
     {
         auto it = texture_bank.find(name);
@@ -134,9 +130,6 @@ namespace udit
         return nullptr;
     }
 
-    // ============================
-    // DEFAULT TEXTURES
-    // ============================
     void Texture2D::load_default_textures()
     {
         std::cout << "Cargando texturas...\n";
