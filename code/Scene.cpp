@@ -124,6 +124,28 @@ namespace udit
         glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f);
 
         resize(width, height);
+
+        // ==========================
+        // ===== GRAFO DE ESCENA ====
+        // ==========================
+
+        terrain_node = std::make_shared<Model>();
+        earth_node = std::make_shared<Model>();
+        moon_node = std::make_shared<Model>();
+
+        // ===== TRANSFORMACIONES =====
+        terrain_node->transform.position = glm::vec3(-100.f, -5.f, -200.f);
+
+        earth_node->transform.position = glm::vec3(0.f, 0.f, -6.f);
+        earth_node->transform.scale = glm::vec3(1.2f);
+
+        moon_node->transform.position = glm::vec3(4.f, 0.f, 0.f);
+        moon_node->transform.scale = glm::vec3(0.35f);
+
+        // ===== JERARQUÍA =====
+        moon_node->set_parent(earth_node.get());
+        earth_node->set_parent(&root);
+        terrain_node->set_parent(&root);
     }
 
     void Scene::load_textures() 
@@ -287,6 +309,7 @@ namespace udit
                 camera.getZ() + right.z * speed * (dx > 0 ? 1 : -1)
             );
         }
+        root.traverse(0.016f); //Se ejecuta el grafo de escena
     }
 
     // ==========================

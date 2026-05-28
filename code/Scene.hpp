@@ -24,8 +24,10 @@ namespace udit
         // ================= SHADERS =================
         static const std::string vertex_shader_code;
         static const std::string fragment_shader_code;
-        // Añade esto a los miembros privados de tu Scene.hpp
-        std::shared_ptr<Node> root;
+
+        // ================= GRAFO =================
+        Node root;   // NO shared_ptr (evita errores de set_parent)
+
         std::shared_ptr<Model> terrain_node;
         std::shared_ptr<Model> earth_node;
         std::shared_ptr<Model> moon_node;
@@ -45,7 +47,6 @@ namespace udit
         std::shared_ptr<Texture2D> texture_wood;
 
         // ================= TEXTURAS =================
-        // (Opcional: puedes almacenar IDs si lo deseas)
         GLuint tex_circulo = 0;
         GLuint tex_earth = 0;
         GLuint tex_luna = 0;
@@ -61,19 +62,16 @@ namespace udit
         void show_compilation_error(GLuint shader_id);
         void show_linkage_error(GLuint program_id);
 
-        void load_textures(); //Cargar texturas
+        void load_textures();
 
     public:
 
-        // ================= CONSTRUCTOR =================
         Scene(unsigned width, unsigned height);
 
-        // ================= LOOP =================
         void update();
         void render();
         void resize(unsigned width, unsigned height);
 
-        // ================= CONTROLES =================
         void moveForward(float dt);
         void moveBackward(float dt);
         void moveLeft(float dt);
