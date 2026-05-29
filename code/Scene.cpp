@@ -157,6 +157,18 @@ namespace udit
     void Scene::update()
     {
         angle += 0.01f;
+
+        // Tierra rota sobre sí misma
+        earth_node->transform.rotation.y = angle * 0.5f;
+
+        // Luna orbita + rota
+        moon_node->transform.position = glm::vec3(
+            cos(angle * 2.0f) * 4.0f,
+            0.0f,
+            sin(angle * 2.0f) * 4.0f
+        );
+
+        moon_node->transform.rotation.x = angle * 3.0f;
     }
 
     void Scene::render()
@@ -169,6 +181,14 @@ namespace udit
 
         glm::mat4 I(1.0f);
         glm::mat4 view = camera.get_view_matrix();
+
+        // Activar texturas globales si quieres
+        glUniform3f(glGetUniformLocation(program_id, "light_pos"), 10.0f, 10.0f, 10.0f);
+        glUniform3f(glGetUniformLocation(program_id, "view_pos"),
+            camera.getX(), camera.getY(), camera.getZ());
+
+        // IMPORTANTE: recorrer el grafo
+        root.traverse(0.016f);
 
         int useTexLoc = glGetUniformLocation(program_id, "use_texture");
 
@@ -309,7 +329,6 @@ namespace udit
                 camera.getZ() + right.z * speed * (dx > 0 ? 1 : -1)
             );
         }
-        root.traverse(0.016f); //Se ejecuta el grafo de escena
     }
 
     // ==========================
