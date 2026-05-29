@@ -14,12 +14,8 @@
 
 namespace udit
 {
-    using namespace std;
-
-    // ==========================
-    // ===== SHADERS ============
-    // ==========================
-    const string Scene::vertex_shader_code =
+    // ================= SHADERS =================
+    const std::string Scene::vertex_shader_code =
         "#version 330 core\n"
         "uniform mat4 model_view_matrix;\n"
         "uniform mat4 projection_matrix;\n"
@@ -41,7 +37,7 @@ namespace udit
         "    frag_color = n;\n"
         "}";
 
-    const string Scene::fragment_shader_code =
+    const std::string Scene::fragment_shader_code =
         "#version 330 core\n"
         "in vec3 frag_color;\n"
         "in vec3 normal;\n"
@@ -56,48 +52,46 @@ namespace udit
         "void main() {\n"
         "    vec3 norm = normalize(normal);\n"
         "    vec3 light_dir = normalize(light_pos - frag_pos);\n"
-        "    float ambient_strength = 0.2;\n"
-        "    vec3 ambient = ambient_strength * frag_color;\n"
+        "    float ambient = 0.2;\n"
+        "    vec3 ambient_col = ambient * frag_color;\n"
         "    float diff = max(dot(norm, light_dir), 0.0);\n"
         "    vec3 diffuse = diff * frag_color;\n"
-        "    float specular_strength = 0.7;\n"
         "    vec3 view_dir = normalize(view_pos - frag_pos);\n"
         "    vec3 reflect_dir = reflect(-light_dir, norm);\n"
         "    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
-        "    vec3 specular = specular_strength * spec * vec3(1.0);\n"
-        "    vec3 result = ambient + diffuse + specular;\n"
-        "    result = pow(result, vec3(1.3));\n"
-        "    if (use_texture)\n"
-        "        fragment_color = texture(diffuse_map, texcoord);\n"
-        "    else\n"
-        "        fragment_color = vec4(result, 1.0);\n"
+        "    vec3 specular = 0.7 * spec * vec3(1.0);\n"
+        "    vec3 result = pow(ambient_col + diffuse + specular, vec3(1.3));\n"
+        "    fragment_color = use_texture ? texture(diffuse_map, texcoord)\n"
+        "                                 : vec4(result, 1.0);\n"
         "}";
 
+    // ================= CONSTANTES =================
     namespace
     {
-        constexpr glm::vec3 TERRAIN_OFFSET = glm::vec3(-100.f, -5.f, -200.f);
-        constexpr glm::vec3 MAIN_CUBE_POS = glm::vec3(0.f, 0.f, -6.f);
+        constexpr glm::vec3 TERRAIN_OFFSET(-100.f, -5.f, -200.f);
+        constexpr glm::vec3 MAIN_CUBE_POS(0.f, 0.f, -6.f);
         constexpr float MAIN_CUBE_SCALE = 1.2f;
 
-        constexpr glm::vec3 SMALL_CUBE_BASE_POS = glm::vec3(0.f, 0.f, -6.f);
-        constexpr glm::vec3 SMALL_CUBE_OFFSET = glm::vec3(4.f, 0.f, 0.f);
+        constexpr glm::vec3 SMALL_CUBE_BASE_POS(0.f, 0.f, -6.f);
+        constexpr glm::vec3 SMALL_CUBE_OFFSET(4.f, 0.f, 0.f);
         constexpr float SMALL_CUBE_SCALE = 0.35f;
     }
 
-    static glm::mat4 make_model(
-        const glm::mat4& base,
+    static glm::mat4 make_model(const glm::mat4& base,
         const glm::vec3& t,
         float rot,
         const glm::vec3& axis,
         const glm::vec3& scale)
     {
-        glm::mat4 m = base;
-        m = glm::translate(m, t);
-        m = glm::rotate(m, rot, axis);
-        m = glm::scale(m, scale);
-        return m;
+        return glm::scale(
+            glm::rotate(
+                glm::translate(base, t),
+                rot,
+                axis),
+            scale);
     }
 
+    // ================= CONSTRUCTOR =================
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
@@ -118,83 +112,67 @@ namespace udit
 
         model_view_matrix_id = glGetUniformLocation(program_id, "model_view_matrix");
         projection_matrix_id = glGetUniformLocation(program_id, "projection_matrix");
-        glUniform1i(glGetUniformLocation(program_id, "use_texture"), 1); //Texturas
 
+        glUniform1i(glGetUniformLocation(program_id, "use_texture"), 1);
         glUniform1i(glGetUniformLocation(program_id, "diffuse_map"), 0);
         glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 1.0f);
 
         resize(width, height);
 
-        // ==========================
-        // ===== GRAFO DE ESCENA ====
-        // ==========================
-
         terrain_node = std::make_shared<Model>();
         earth_node = std::make_shared<Model>();
         moon_node = std::make_shared<Model>();
 
-        // ===== TRANSFORMACIONES =====
-        terrain_node->transform.position = glm::vec3(-100.f, -5.f, -200.f);
+        terrain_node->transform.position = TERRAIN_OFFSET;
+        earth_node->transform.position = MAIN_CUBE_POS;
+        earth_node->transform.scale = glm::vec3(MAIN_CUBE_SCALE);
+        moon_node->transform.position = SMALL_CUBE_OFFSET;
+        moon_node->transform.scale = glm::vec3(SMALL_CUBE_SCALE);
 
-        earth_node->transform.position = glm::vec3(0.f, 0.f, -6.f);
-        earth_node->transform.scale = glm::vec3(1.2f);
-
-        moon_node->transform.position = glm::vec3(4.f, 0.f, 0.f);
-        moon_node->transform.scale = glm::vec3(0.35f);
-
-        // ===== JERARQUÍA =====
         moon_node->set_parent(earth_node.get());
         earth_node->set_parent(&root);
         terrain_node->set_parent(&root);
     }
 
-    void Scene::load_textures() 
+    void Scene::load_textures()
     {
-        texture_wood = make_shared <Texture2D>("../../shared/assets/wood.png");
+        texture_wood = std::make_shared<Texture2D>("../../shared/assets/wood.png");
     }
 
-
+    // ================= UPDATE =================
     void Scene::update()
     {
         angle += 0.01f;
 
-        // Tierra rota sobre sí misma
         earth_node->transform.rotation.y = angle * 0.5f;
 
-        // Luna orbita + rota
-        moon_node->transform.position = glm::vec3(
+        moon_node->transform.position = {
             cos(angle * 2.0f) * 4.0f,
             0.0f,
             sin(angle * 2.0f) * 4.0f
-        );
+        };
 
         moon_node->transform.rotation.x = angle * 3.0f;
     }
 
+    // ================= RENDER =================
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         skybox->render(camera);
-
         glUseProgram(program_id);
 
-        glm::mat4 I(1.0f);
         glm::mat4 view = camera.get_view_matrix();
 
-        // Activar texturas globales si quieres
-        glUniform3f(glGetUniformLocation(program_id, "light_pos"), 10.0f, 10.0f, 10.0f);
+        glUniform3f(glGetUniformLocation(program_id, "light_pos"), 10.f, 10.f, 10.f);
         glUniform3f(glGetUniformLocation(program_id, "view_pos"),
             camera.getX(), camera.getY(), camera.getZ());
 
-        // IMPORTANTE: recorrer el grafo
         root.traverse(0.016f);
 
         int useTexLoc = glGetUniformLocation(program_id, "use_texture");
 
-        // =========================
-        // ===== TERRAIN ===========
-        // =========================
         auto terrainTex = Texture2D::get("terrain");
 
         if (terrainTex)
@@ -203,30 +181,23 @@ namespace udit
             glUniform1i(useTexLoc, 1);
             glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 8.0f);
         }
-        else
-        {
-            glUniform1i(useTexLoc, 0);
-        }
+        else glUniform1i(useTexLoc, 0);
 
-        glm::mat4 terrain_model = glm::translate(I, TERRAIN_OFFSET);
+        glm::mat4 terrain_model = glm::translate(glm::mat4(1.0f), TERRAIN_OFFSET);
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * terrain_model));
 
         terrain.Draw();
 
-        // =========================
-        // ===== MAIN CUBE =========
-        // =========================
         auto earthTex = Texture2D::get("earth");
 
         if (earthTex)
         {
-            cube.set_texture(earthTex->get_id());   // asigna textura al cubo
+            cube.set_texture(earthTex->get_id());
             cube.enable_texture(true);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, earthTex->get_id());
-
             glUniform1i(useTexLoc, 1);
         }
         else
@@ -236,10 +207,10 @@ namespace udit
         }
 
         glm::mat4 main_cube_model = make_model(
-            I,
+            glm::mat4(1.0f),
             MAIN_CUBE_POS,
-            angle * 0.5f,   // más lento = más realista
-            glm::vec3(0.f, 1.f, 0.f),
+            angle * 0.5f,
+            { 0,1,0 },
             glm::vec3(MAIN_CUBE_SCALE)
         );
 
@@ -248,20 +219,16 @@ namespace udit
 
         cube.render();
 
-        // =========================
-        // ===== SMALL CUBE ========
-        // =========================
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
-        glUniform1i(useTexLoc, 1); // sin textura explícito
-        texture_wood->bind();
 
-        glm::mat4 small_cube_model = I;
-        small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_BASE_POS);
-        small_cube_model = glm::rotate(small_cube_model, angle * 2.f, glm::vec3(0, 1, 0));
+        texture_wood->bind();
+        glUniform1i(useTexLoc, 1);
+
+        glm::mat4 small_cube_model = glm::translate(glm::mat4(1.0f), SMALL_CUBE_BASE_POS);
+        small_cube_model = glm::rotate(small_cube_model, angle * 2.f, { 0,1,0 });
         small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_OFFSET);
-        small_cube_model = glm::rotate(small_cube_model, angle * 3.f, glm::vec3(1, 1, 0));
+        small_cube_model = glm::rotate(small_cube_model, angle * 3.f, { 1,1,0 });
         small_cube_model = glm::scale(small_cube_model, glm::vec3(SMALL_CUBE_SCALE));
 
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
@@ -276,22 +243,13 @@ namespace udit
             0.25f
         ));
 
-        small_cube_model = glm::rotate(
-            small_cube_model,
-            angle * 0.8f,
-            glm::vec3(0, 1, 0)
-        );
-
         cube.render();
-        glUniform1i(useTexLoc, 0); //Se deshabilita la textura
 
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
     }
 
-    // ==========================
-    // ===== CONTROLS ===========
-    // ==========================
+    // ================= CONTROLS =================
     void Scene::moveForward(float dt) { camera.moveForward(dt); }
     void Scene::moveBackward(float dt) { camera.moveBackward(dt); }
     void Scene::moveLeft(float dt) { camera.moveLeft(dt); }
@@ -304,36 +262,26 @@ namespace udit
     {
         camera.rotate(dx, dy);
 
-        const float speed = 5.0f * dt;
+        float x, y, z;
+        camera.getDirection(x, y, z);
 
-        float dirX, dirY, dirZ;
-        camera.getDirection(dirX, dirY, dirZ);
-
-        glm::vec3 forward = glm::normalize(glm::vec3(dirX, dirY, dirZ));
+        glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
         glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
+        float speed = 5.0f * dt;
+
         if (fabs(dy) > 1.0f)
-        {
-            camera.setPosition(
-                camera.getX() + forward.x * speed * (dy < 0 ? 1 : -1),
-                camera.getY() + forward.y * speed * (dy < 0 ? 1 : -1),
-                camera.getZ() + forward.z * speed * (dy < 0 ? 1 : -1)
-            );
-        }
+            camera.setPosition(camera.getX() + forward.x * speed,
+                camera.getY() + forward.y * speed,
+                camera.getZ() + forward.z * speed);
 
         if (fabs(dx) > 1.0f)
-        {
-            camera.setPosition(
-                camera.getX() + right.x * speed * (dx > 0 ? 1 : -1),
-                camera.getY() + right.y * speed * (dx > 0 ? 1 : -1),
-                camera.getZ() + right.z * speed * (dx > 0 ? 1 : -1)
-            );
-        }
+            camera.setPosition(camera.getX() + right.x * speed,
+                camera.getY() + right.y * speed,
+                camera.getZ() + right.z * speed);
     }
 
-    // ==========================
-    // ===== RESIZE =============
-    // ==========================
+    // ================= RESIZE =================
     void Scene::resize(unsigned width, unsigned height)
     {
         camera.setRatio(float(width) / height);
@@ -349,13 +297,9 @@ namespace udit
         glViewport(0, 0, width, height);
     }
 
-    // ==========================
-    // ===== SHADERS ============
-    // ==========================
+    // ================= SHADERS =================
     GLuint Scene::compile_shaders()
     {
-        GLint success;
-
         GLuint vs = glCreateShader(GL_VERTEX_SHADER);
         GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -366,10 +310,13 @@ namespace udit
         glShaderSource(fs, 1, &f, nullptr);
 
         glCompileShader(vs);
+        glCompileShader(fs);
+
+        GLint success;
+
         glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
         if (!success) show_compilation_error(vs);
 
-        glCompileShader(fs);
         glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
         if (!success) show_compilation_error(fs);
 
@@ -391,10 +338,8 @@ namespace udit
     {
         GLint len;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
-
         std::string log(len, '\0');
         glGetShaderInfoLog(id, len, nullptr, log.data());
-
         std::cerr << log << std::endl;
         assert(false);
     }
@@ -403,12 +348,9 @@ namespace udit
     {
         GLint len;
         glGetProgramiv(id, GL_INFO_LOG_LENGTH, &len);
-
         std::string log(len, '\0');
         glGetProgramInfoLog(id, len, nullptr, log.data());
-
         std::cerr << log << std::endl;
         assert(false);
     }
-
 }

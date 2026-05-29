@@ -5,20 +5,16 @@
 // CONSTRUCTOR
 // =======================
 Camera::Camera()
+    : position(0.0f, 2.0f, 5.0f),
+    rotX(0.0f),
+    rotY(3.1416f),
+    speed(5.0f),
+    sensitivity(0.002f),
+    fov(60.0f),
+    near_z(0.1f),
+    far_z(5000.0f),
+    ratio(16.0f / 9.0f)
 {
-    position = glm::vec3(0.0f, 2.0f, 5.0f);
-
-    rotX = 0.0f;        // pitch
-    rotY = 3.1416f;     // yaw
-
-    speed = 5.0f;
-    sensitivity = 0.002f;
-
-    fov = 60.0f;
-    near_z = 0.1f;
-    far_z = 5000.0f;
-    ratio = 16.0f / 9.0f;
-
     updateProjection();
 }
 
@@ -36,7 +32,7 @@ void Camera::updateProjection()
 }
 
 // =======================
-// DIRECCIÓN (NORMALIZADA)
+// DIRECCIÓN
 // =======================
 void Camera::getDirection(float& x, float& y, float& z) const
 {
@@ -46,24 +42,20 @@ void Camera::getDirection(float& x, float& y, float& z) const
 }
 
 // =======================
-// MOVIMIENTO RELATIVO
+// MOVIMIENTO
 // =======================
 void Camera::moveForward(float dt)
 {
     float x, y, z;
     getDirection(x, y, z);
-
-    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
-    position += forward * speed * dt;
+    position += glm::normalize(glm::vec3(x, y, z)) * speed * dt;
 }
 
 void Camera::moveBackward(float dt)
 {
     float x, y, z;
     getDirection(x, y, z);
-
-    glm::vec3 forward = glm::normalize(glm::vec3(x, y, z));
-    position -= forward * speed * dt;
+    position -= glm::normalize(glm::vec3(x, y, z)) * speed * dt;
 }
 
 void Camera::moveRight(float dt)
@@ -88,33 +80,23 @@ void Camera::moveLeft(float dt)
     position -= right * speed * dt;
 }
 
-void Camera::moveUp(float dt)
-{
-    position.y += speed * dt;
-}
-
-void Camera::moveDown(float dt)
-{
-    position.y -= speed * dt;
-}
+void Camera::moveUp(float dt) { position.y += speed * dt; }
+void Camera::moveDown(float dt) { position.y -= speed * dt; }
 
 // =======================
-// ROTACIÓN LIBRE (FPS + 360°)
+// ROTACIÓN
 // =======================
 void Camera::rotate(float dx, float dy)
 {
-    rotY += dx * sensitivity;   // yaw → 360° infinitos
-    rotX -= dy * sensitivity;   // pitch
+    rotY += dx * sensitivity;
+    rotX -= dy * sensitivity;
 
-    // Normalizar yaw para evitar overflow
     const float TWO_PI = 6.28318f;
-    if (rotY > TWO_PI)  rotY -= TWO_PI;
-    if (rotY < 0.0f)    rotY += TWO_PI;
+    if (rotY > TWO_PI) rotY -= TWO_PI;
+    if (rotY < 0.0f)   rotY += TWO_PI;
 
-    // Limitar pitch para evitar flip
-    const float limit = 1.55f; // ~89°
-    if (rotX > limit)  rotX = limit;
-    if (rotX < -limit) rotX = -limit;
+    const float limit = 1.55f;
+    rotX = glm::clamp(rotX, -limit, limit);
 }
 
 // =======================
@@ -127,8 +109,6 @@ glm::mat4 Camera::get_view_matrix() const
 
     glm::vec3 front = glm::normalize(glm::vec3(x, y, z));
 
-    glm::vec3 centeredCamPos(0.f, 5.f, -6.f);
-
     return glm::lookAt(
         position,
         position + front,
@@ -137,7 +117,7 @@ glm::mat4 Camera::get_view_matrix() const
 }
 
 // =======================
-// PROJECTION
+// PROJECTION GETTER
 // =======================
 const glm::mat4& Camera::get_projection_matrix() const
 {
@@ -149,18 +129,11 @@ const glm::mat4& Camera::get_projection_matrix() const
 // =======================
 void Camera::setPosition(float x, float y, float z)
 {
-    position = glm::vec3(x, y, z);
+    position = { x, y, z };
 }
 
-void Camera::setSpeed(float s)
-{
-    speed = s;
-}
-
-void Camera::setSensitivity(float s)
-{
-    sensitivity = s;
-}
+void Camera::setSpeed(float s) { speed = s; }
+void Camera::setSensitivity(float s) { sensitivity = s; }
 
 void Camera::setRatio(float r)
 {

@@ -1,8 +1,8 @@
 #include "Material.hpp"
-#include "Texture2D.hpp" // Para poder usar bind()
+#include "Texture2D.hpp"
 
 Material::Material(std::shared_ptr<Shader_Program> shader)
-    : shader_program(shader), texture(nullptr) // Inicializamos sin textura
+    : shader_program(shader), texture(nullptr)
 {
 }
 
@@ -13,25 +13,23 @@ void Material::set_texture(std::shared_ptr<udit::Texture2D> tex)
 
 void Material::use()
 {
-    if (shader_program && shader_program->good())
-    {
-        shader_program->use();
+    if (!shader_program || !shader_program->good())
+        return;
 
-        // Si el material tiene textura, la activamos
+    shader_program->use();
+
+    GLint use_tex_loc = shader_program->get_uniform_location("use_texture");
+
+    if (use_tex_loc != -1)
+    {
         if (texture)
         {
-            // La vinculamos al slot 0 (coincide con el sampler del shader)
             texture->bind(0);
-
-            // Avisamos al shader que use la textura
-            GLint use_tex_loc = shader_program->get_uniform_location("use_texture");
-            if (use_tex_loc != -1) glUniform1i(use_tex_loc, 1);
+            glUniform1i(use_tex_loc, 1);
         }
         else
         {
-            // Si no hay textura, avisamos al shader para que use color plano
-            GLint use_tex_loc = shader_program->get_uniform_location("use_texture");
-            if (use_tex_loc != -1) glUniform1i(use_tex_loc, 0);
+            glUniform1i(use_tex_loc, 0);
         }
     }
 }

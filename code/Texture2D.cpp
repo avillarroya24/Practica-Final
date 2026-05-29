@@ -19,7 +19,7 @@ namespace udit
             &width,
             &height,
             &channels,
-            SOIL_LOAD_AUTO   // 🔥 IMPORTANTE: respeta formato real
+            SOIL_LOAD_AUTO
         );
 
         if (!data)
@@ -27,6 +27,7 @@ namespace udit
             std::cerr << "[ERROR] No se pudo cargar textura: " << path << std::endl;
 
             unsigned char white[4] = { 255, 255, 255, 255 };
+
             width = height = 1;
 
             glGenTextures(1, &texture_id);
@@ -47,10 +48,12 @@ namespace udit
         glGenTextures(1, &texture_id);
         glBindTexture(GL_TEXTURE_2D, texture_id);
 
+        // 🔥 evita glitches en algunos drivers
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
 
+        // 🔥 carga textura
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
@@ -63,18 +66,14 @@ namespace udit
             data
         );
 
-        // 🔥 WRAP seguro
+        // 🔥 parámetros correctos
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        // 🔥 FILTROS correctos
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // 🔥 FIX mipmaps en drivers modernos
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
-
+        // 🔥 mipmaps (importante para cubos)
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -84,8 +83,8 @@ namespace udit
         loaded = true;
 
         std::cout << "[OK] Textura cargada: " << path
-            << " (" << width << "x" << height << ", "
-            << channels << " canales)\n";
+            << " (" << width << "x" << height
+            << ", " << channels << " canales)\n";
     }
 
     Texture2D::~Texture2D()
