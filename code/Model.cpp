@@ -35,17 +35,10 @@ namespace udit
     // Implementación de funciones puente para Scene.cpp
     void Model::set_texture(std::shared_ptr<Texture2D> tex)
     {
-        if (material) material->set_texture(tex);
+        if (material)
+            material->set_texture(tex);
     }
 
-    void Model::enable_texture(bool enable)
-    {
-        if (material)
-        {
-            GLint loc = material->get_shader_program()->get_uniform_location("use_texture");
-            if (loc != -1) glUniform1i(loc, enable ? 1 : 0);
-        }
-    }
 
     void Model::set_color(const glm::vec4& color)
     {

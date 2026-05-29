@@ -96,7 +96,7 @@ namespace udit
 
     void Texture2D::bind(unsigned int slot) const
     {
-        if (!loaded) return;
+        if (!loaded || texture_id == 0) return;
 
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, texture_id);
