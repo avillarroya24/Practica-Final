@@ -1,6 +1,32 @@
 #include "Shader_Program.hpp"
 #include <iostream>
 
+/*
+
+   Implementación de la clase Shader_Program.
+ 
+ * Este archivo gestiona la creación, compilación y uso de programas de shaders
+   en OpenGL. Un programa de shaders está formado por un vertex shader y un
+   fragment shader que se compilan y enlazan.
+    
+
+*/
+
+
+// ================= CONSTRUCTOR =================
+
+/*
+
+    Constructor del programa de shaders.
+ 
+ * Recibe el código fuente del vertex shader y fragment shader,
+   y los compila automáticamente.
+ 
+ * @param vertex_shader_code Código GLSL del vertex shader.
+ * @param fragment_shader_code Código GLSL del fragment shader.
+
+*/
+
 Shader_Program::Shader_Program(
     const std::string& vertex_shader_code,
     const std::string& fragment_shader_code
@@ -11,10 +37,28 @@ Shader_Program::Shader_Program(
     compile_shaders();
 }
 
+// ================= VALIDACIÓN =================
+
+/*
+
+   Comprueba si el shader se compiló correctamente.
+
+ * @return true si el programa es válido, false en caso contrario.
+
+*/
+
 bool Shader_Program::good() const
 {
     return shader_program_id != -1;
 }
+
+// ================= USO =================
+
+/*
+   Activa el programa de shaders.
+ 
+ * Hace que OpenGL utilice este shader para el renderizado.
+*/
 
 void Shader_Program::use()
 {
@@ -22,10 +66,35 @@ void Shader_Program::use()
         glUseProgram(shader_program_id);
 }
 
+// ================= UNIFORMS =================
+
+/*
+
+    Obtiene la localización de una variable uniform.
+ 
+ * @param name Nombre del uniform en el shader.
+ * @return Identificador de la ubicación del uniform.
+
+*/
+
 GLint Shader_Program::get_uniform_location(const char* name)
 {
     return glGetUniformLocation(shader_program_id, name);
 }
+
+// ================= COMPILACIÓN =================
+
+/*
+
+   Compila y enlaza los shaders.
+ 
+ * Este método:
+ * - Compila el vertex shader
+ * - Compila el fragment shader
+ * - Enlaza ambos en un programa OpenGL
+ * - Comprueba errores en cada etapa
+ 
+*/
 
 void Shader_Program::compile_shaders()
 {
@@ -35,6 +104,9 @@ void Shader_Program::compile_shaders()
     // ==========================
     // ===== VERTEX SHADER ======
     // ==========================
+
+    //Se crea y compila el vertex shader
+
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
     const char* v_code = vertex_code.c_str();
 
@@ -53,6 +125,9 @@ void Shader_Program::compile_shaders()
     // ==========================
     // ===== FRAGMENT SHADER ====
     // ==========================
+
+    //Se crea y compila el fragment shader
+
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
     const char* f_code = fragment_code.c_str();
 
@@ -71,6 +146,9 @@ void Shader_Program::compile_shaders()
     // ==========================
     // ===== PROGRAM ============
     // ==========================
+
+    //Se enlazan ambos shaders en un programa ejecutable
+
     shader_program_id = glCreateProgram();
     glAttachShader(shader_program_id, vs);
     glAttachShader(shader_program_id, fs);

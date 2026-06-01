@@ -1,9 +1,16 @@
 ﻿#include "Camera.hpp"
 #include <cmath>
+/* Este archivo contiene la implementación de los métodos de la clase Camera,
+* encargada de gestionar la posición, orientación y matrices de vista y proyección
+* de una cámara 3D.*/
 
 // =======================
 // CONSTRUCTOR
 // =======================
+
+/* Inicializa la posición, rotación, velocidad y parámetros de proyección
+* de la cámara.También calcula la matriz de proyección inicial.
+*/
 Camera::Camera()
     : position(0.0f, 2.0f, 5.0f),
     rotX(0.0f),
@@ -21,6 +28,10 @@ Camera::Camera()
 // =======================
 // PROJECTION
 // =======================
+
+/*Calcula la matriz de proyección en perspectiva en función del
+* campo de visión, ratio de aspecto y planos de recorte.
+*/
 void Camera::updateProjection()
 {
     projection_matrix = glm::perspective(
@@ -34,6 +45,16 @@ void Camera::updateProjection()
 // =======================
 // DIRECCIÓN
 // =======================
+
+/* 
+    Calcula la dirección hacia donde mira la cámara.
+ * 
+ * @param x Componente X de la dirección.
+ * @param y Componente Y de la dirección.
+ * @param z Componente Z de la dirección.
+
+*/
+
 void Camera::getDirection(float& x, float& y, float& z) const
 {
     x = cos(rotX) * cos(rotY);
@@ -44,6 +65,11 @@ void Camera::getDirection(float& x, float& y, float& z) const
 // =======================
 // MOVIMIENTO
 // =======================
+
+/*
+    Mueve la cámara en diferentes direcciones (arriba, abajo, hacia adelante, hacia detras...)
+ * @param dt Tiempo delta (tiempo entre frames).
+*/
 void Camera::moveForward(float dt)
 {
     float x, y, z;
@@ -86,6 +112,14 @@ void Camera::moveDown(float dt) { position.y -= speed * dt; }
 // =======================
 // ROTACIÓN
 // =======================
+
+/*
+    Rota la cámara según el movimiento del ratón.
+ * 
+ * @param dx Movimiento en el eje X.
+ * @param dy Movimiento en el eje Y.
+
+*/
 void Camera::rotate(float dx, float dy)
 {
     rotY += dx * sensitivity;
@@ -102,6 +136,13 @@ void Camera::rotate(float dx, float dy)
 // =======================
 // VIEW MATRIX
 // =======================
+
+/*
+    Obtiene la matriz de vista.
+
+ * @return Matriz de vista calculada con glm::lookAt.
+
+*/
 glm::mat4 Camera::get_view_matrix() const
 {
     float x, y, z;
@@ -119,6 +160,13 @@ glm::mat4 Camera::get_view_matrix() const
 // =======================
 // PROJECTION GETTER
 // =======================
+
+/*
+    Devuelve la matriz de proyección.
+
+ * @return Referencia constante a la matriz de proyección.
+
+*/
 const glm::mat4& Camera::get_projection_matrix() const
 {
     return projection_matrix;
@@ -127,14 +175,21 @@ const glm::mat4& Camera::get_projection_matrix() const
 // =======================
 // SETTERS
 // =======================
+
+//Establece la posicion de la camara
+
 void Camera::setPosition(float x, float y, float z)
 {
     position = { x, y, z };
 }
 
+//Establece la velocidad del movimiento
 void Camera::setSpeed(float s) { speed = s; }
+
+//Establece la sensibilidad del raton
 void Camera::setSensitivity(float s) { sensitivity = s; }
 
+//Establece el ratio de aspecto y actualiza la proyeccion
 void Camera::setRatio(float r)
 {
     ratio = r;
@@ -144,6 +199,11 @@ void Camera::setRatio(float r)
 // =======================
 // GETTERS
 // =======================
+
+/*
+
+    Devuelves las coordenadas de la camara (X,Y,Z)
+*/
 float Camera::getX() const { return position.x; }
 float Camera::getY() const { return position.y; }
 float Camera::getZ() const { return position.z; }

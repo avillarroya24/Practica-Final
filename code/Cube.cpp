@@ -1,9 +1,25 @@
 ﻿#include "Cube.hpp"
 #include <glm.hpp>
 
+/*
+
+    Implementación de la clase Cube.
+
+ * Este archivo define la geometría de un cubo y su comportamiento
+ * en renderizado usando OpenGL. Incluye la gestión de buffers,
+ * colores dinámicos y texturas.
+
+*/
+
 namespace udit
 {
     // ================= VÉRTICES =================
+
+    /*
+        Coordenadas de los vértices del cubo.
+
+     * Define las posiciones en 3D de los 8 vértices del cubo.
+    */
     const GLfloat Cube::coordinates[] =
     {
         -1,-1, 1,   1,-1, 1,   1, 1, 1,  -1, 1, 1,
@@ -11,6 +27,14 @@ namespace udit
     };
 
     // ================= ÍNDICES =================
+
+    /*
+        
+        Índices de los triángulos del cubo.
+
+     * Define cómo se conectan los vértices para formar las caras
+       del cubo mediante triángulos.
+    */
     const GLubyte Cube::indices[] =
     {
         0,1,2, 0,2,3,
@@ -22,6 +46,13 @@ namespace udit
     };
 
     // ================= UVs =================
+
+    /*
+    
+        Coordenadas de textura (UV) del cubo.
+
+     * Define cómo se mapea una textura sobre las caras del cubo.
+    */
     const GLfloat Cube::texcoords[] =
     {
         0,0, 1,0, 1,1, 0,1,
@@ -29,6 +60,15 @@ namespace udit
     };
 
     // ================= CONSTRUCTOR =================
+
+    /*
+    
+        Constructor del cubo.
+
+     * Inicializa los buffers de OpenGL (VAO, VBO, EBO) y configura
+     * los atributos de vértices: posición, color y coordenadas UV.
+    */
+
     Cube::Cube()
     {
         glGenVertexArrays(1, &vao_id);
@@ -65,6 +105,8 @@ namespace udit
     }
 
     // ================= DESTRUCTOR =================
+
+    //Libera los recursos de OpenGL asociados al cubo
     Cube::~Cube()
     {
         glDeleteVertexArrays(1, &vao_id);
@@ -72,6 +114,17 @@ namespace udit
     }
 
     // ================= COLOR DINÁMICO =================
+
+    /*
+    
+        Establece el color del cubo.
+     
+     * Actualiza dinámicamente el color de todos los vértices.
+    
+     * @param color Vector RGB con el color deseado.
+    
+    */
+
     void Cube::set_color(const glm::vec3& color)
     {
         GLfloat data[24];
@@ -88,10 +141,24 @@ namespace udit
     }
 
     // ================= TEXTURA =================
+
+    /*
+    
+         Asigna una textura al cubo.
+ 
+     * @param texture ID de la textura en OpenGL.
+    */
     void Cube::set_texture(GLuint texture)
     {
         texture_id = texture;
     }
+
+    /*
+    
+        Activa o desactiva el uso de textura.
+    
+     * @param enable true para usar textura, false para desactivarla.
+    */
 
     void Cube::enable_texture(bool enable)
     {
@@ -99,6 +166,16 @@ namespace udit
     }
 
     // ================= RENDER =================
+
+    /*
+    
+         Renderiza el cubo.
+
+     * Aplica la transformación del modelo, enlaza la textura si está activa
+       y dibuja el cubo utilizando los índices definidos. También renderiza
+       recursivamente los objetos hijos.
+    
+    */
     void Cube::render()
     {
         glm::mat4 model = transform.get_transform_matrix();

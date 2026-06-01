@@ -3,30 +3,49 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
 
+/*
+
+    Punto de entrada de la aplicación.
+ 
+ * Este archivo contiene la función principal del programa. Se encarga de:
+ * - Crear la ventana y la escena
+ * - Gestionar eventos de entrada (teclado y ratón)
+ * - Ejecutar el bucle principal (update + render)
+ * - Finalizar correctamente SDL
+*/
+
 using udit::Scene;
 using udit::Window;
 
 int main(int, char* [])
 {
-    constexpr unsigned WIDTH = 1024;
-    constexpr unsigned HEIGHT = 576;
+    constexpr unsigned WIDTH = 1024; //Ancho de la ventana
+    constexpr unsigned HEIGHT = 576; //Alto de la ventana
 
-    Window window("OpenGL example", WIDTH, HEIGHT, { 3, 3 });
-    Scene scene(WIDTH, HEIGHT);
+    Window window("OpenGL example", WIDTH, HEIGHT, { 3, 3 }); //Ventana principal
+    Scene scene(WIDTH, HEIGHT); //Escena 3D
 
-    bool running = true;
-    bool first_mouse = true;
+    bool running = true; //Controla el bucle principal
+    bool first_mouse = true; //Control para inicializar el raton
 
-    float mouse_x = 0.0f, mouse_y = 0.0f;
-    float last_mouse_x = WIDTH * 0.5f;
-    float last_mouse_y = HEIGHT * 0.5f;
+    float mouse_x = 0.0f, mouse_y = 0.0f; //Posicion actual del raton
+    float last_mouse_x = WIDTH * 0.5f; //Ultima posicion X del raton
+    float last_mouse_y = HEIGHT * 0.5f; //Ultima posicion Y del raton
 
     while (running)
     {
         SDL_Event event;
 
-        float mouse_dx = 0.0f;
-        float mouse_dy = 0.0f;
+        float mouse_dx = 0.0f; //Movimiento en X del raton
+        float mouse_dy = 0.0f; //Movimiento en Y del raton
+
+        // ================= EVENTOS =================
+
+        /*
+         * Procesa todos los eventos del sistema:
+         * - Movimiento del ratón
+         * - Cierre de la ventana
+        */
 
         while (SDL_PollEvent(&event))
         {
@@ -43,7 +62,7 @@ int main(int, char* [])
                     first_mouse = false;
                 }
 
-                mouse_dx += (mouse_x - last_mouse_x);
+                mouse_dx += (mouse_x - last_mouse_x); //Calculo del desplazamiento del raton
                 mouse_dy += (mouse_y - last_mouse_y);
 
                 last_mouse_x = mouse_x;
@@ -62,6 +81,10 @@ int main(int, char* [])
 
         SDL_PumpEvents();
 
+        // ================= INPUT TECLADO =================
+
+        //Consulta el estado del teclado para mover la camara
+
         const bool* keys = SDL_GetKeyboardState(nullptr);
         constexpr float dt = 0.016f;
 
@@ -72,14 +95,14 @@ int main(int, char* [])
         if (keys[SDL_SCANCODE_SPACE]) scene.moveUp(dt);
         if (keys[SDL_SCANCODE_LCTRL]) scene.moveDown(dt);
 
-        scene.handleMouse(mouse_dx, mouse_dy, dt);
+        scene.handleMouse(mouse_dx, mouse_dy, dt); //Aplica la rotacion de camara en funcion del movimiento del raton
 
-        scene.update();
-        scene.render();
+        scene.update(); //Actualiza la logica de la escena
+        scene.render(); //Dibuja la escena en pantalla
 
-        window.swap_buffers();
+        window.swap_buffers(); //Intercambia buffers (doble buffer)
     }
 
-    SDL_Quit();
+    SDL_Quit(); //Finaliza SDL correctamente
     return 0;
 }

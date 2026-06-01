@@ -3,6 +3,25 @@
 #include <iostream>
 #include <random>
 
+/*
+
+   Implementación de la clase Terrain.
+ 
+ * Este archivo genera un terreno procedimental basado en heightmap,
+   construye su malla (vertices e índices) y la sube a la GPU para su renderizado.
+
+*/
+
+// ================= CONSTRUCTOR =================
+
+/*
+     Inicializa el terreno generando:
+ * - Heightmap (alturas procedurales)
+ * - Malla (vértices e índices)
+ * - Buffers en GPU
+
+*/
+
 Terrain::Terrain(int width, int height, float scale)
     : m_width(width), m_height(height), m_scale(scale)
 {
@@ -11,12 +30,25 @@ Terrain::Terrain(int width, int height, float scale)
     UploadToGPU();
 }
 
+// ================= DESTRUCTOR =================
+
+/*
+     Libera los recursos de OpenGL asociados:
+ * - VAO
+ * - VBO
+ * - EBO
+
+*/
 Terrain::~Terrain()
 {
     if (vao_id) glDeleteVertexArrays(1, &vao_id);
     if (vbo_id) glDeleteBuffers(1, &vbo_id);
     if (ebo_id) glDeleteBuffers(1, &ebo_id);
 }
+
+// ================= RENDER =================
+
+//Dibuja el terreno
 
 void Terrain::Draw() const
 {
@@ -26,7 +58,17 @@ void Terrain::Draw() const
     glBindVertexArray(0);
 }
 
-// Genera alturas mas altas y con un poco de ruido
+
+// ================= HEIGHTMAP =================
+
+/*
+
+   Genera el heightmap del terreno.
+
+ * Utiliza funciones seno/coseno combinadas con ruido aleatorio
+   para simular un terreno natural con variaciones suaves.
+
+*/
 void Terrain::GenerateHeightmap()
 {
     m_heights.resize(m_width * m_height);
@@ -46,12 +88,25 @@ void Terrain::GenerateHeightmap()
     }
 }
 
+// ================= ACCESO A ALTURA =================
+
+//Obtiene la altura en una coordenada del terreno
+
 float Terrain::GetHeight(int x, int z) const
 {
     return m_heights[z * m_width + x];
 }
+// ================= NORMALES =================
 
-// Calcula normales
+/*
+
+   Calcula la normal en un punto del terreno.
+ 
+ * Se basa en diferencias de altura con los vecinos
+   para aproximar la dirección de la superficie.
+
+*/
+
 glm::vec3 Terrain::CalculateNormal(int x, int z) const
 {
     float hL = (x > 0) ? GetHeight(x - 1, z) : GetHeight(x, z);
@@ -63,7 +118,19 @@ glm::vec3 Terrain::CalculateNormal(int x, int z) const
     return glm::normalize(normal);
 }
 
-// Construye vertices e indices
+
+// ================= CONSTRUCCIÓN DE MALLA =================
+
+/*
+   Construye la malla del terreno.
+ 
+   Genera:
+ * - Vértices (posición, normal, UV)
+ * - Índices para triángulos
+    
+
+*/
+
 void Terrain::BuildMesh()
 {
     m_vertices.clear();
@@ -101,7 +168,18 @@ void Terrain::BuildMesh()
     }
 }
 
-// Sube la malla a GPU
+// ================= GPU UPLOAD =================
+
+/*
+
+   Sube la malla del terreno a la GPU.
+ 
+ * Crea VAO, VBO y EBO y define los atributos:
+ * - posición
+ * - normal
+ * - coordenadas UV
+
+*/
 void Terrain::UploadToGPU()
 {
     std::vector<float> vertex_data;
@@ -129,6 +207,8 @@ void Terrain::UploadToGPU()
     glGenBuffers(1, &ebo_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), m_indices.data(), GL_STATIC_DRAW);
+
+    // ================= ATRIBUTOS =================
 
     // Posición
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);

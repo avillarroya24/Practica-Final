@@ -12,9 +12,44 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+/*
+
+   Implementación de la clase Scene.
+ 
+ * Este archivo contiene la lógica principal del motor gráfico:
+ * - Gestión de shaders
+ * - Inicialización de objetos 3D
+ * - Actualización de la escena
+ * - Renderizado completo
+ * - Gestión de cámara, luces y skybox
+
+
+*/
+
+
+
 namespace udit
 {
     // ================= SHADERS =================
+
+    /*
+    
+       Vertex shader del motor.
+     
+     * Calcula la posición de los vértices en pantalla y pasa información
+     * al fragment shader (normales, UVs, posición, etc.).
+    
+    */
+
+    /*
+    
+       Fragment shader del motor.
+     
+     * Calcula iluminación (ambient, diffuse, specular) y aplica textura
+       si está activada.
+    
+    */
+
     const std::string Scene::vertex_shader_code =
         "#version 330 core\n"
         "uniform mat4 model_view_matrix;\n"
@@ -66,6 +101,8 @@ namespace udit
         "}";
 
     // ================= CONSTANTES =================
+
+    //Namespace de constantes de configuración de escena.
     namespace
     {
         constexpr glm::vec3 TERRAIN_OFFSET(-100.f, -5.f, -200.f);
@@ -76,6 +113,20 @@ namespace udit
         constexpr glm::vec3 SMALL_CUBE_OFFSET(4.f, 0.f, 0.f);
         constexpr float SMALL_CUBE_SCALE = 0.35f;
     }
+
+    // ================= UTILIDAD =================
+
+    /*
+       Construye una matriz de modelo combinando transformaciones.
+    
+     * @param base Matriz base.
+     * @param t Traslación.
+     * @param rot Rotación en radianes.
+     * @param axis Eje de rotación.
+     * @param scale Escala.
+     * @return Matriz modelo resultante.
+    
+    */
 
     static glm::mat4 make_model(const glm::mat4& base,
         const glm::vec3& t,
@@ -92,6 +143,19 @@ namespace udit
     }
 
     // ================= CONSTRUCTOR =================
+
+    /*
+    
+       Constructor de la escena.
+   
+     * Inicializa:
+     * - Skybox
+     * - Texturas
+     * - OpenGL (depth, culling, blending)
+     * - Shaders
+     * - Cámara y objetos de la escena
+    
+    */
     Scene::Scene(unsigned width, unsigned height)
         : angle(0.0f)
     {
@@ -119,6 +183,7 @@ namespace udit
 
         resize(width, height);
 
+        //Creacion de los nodos del grafo de escena
         terrain_node = std::make_shared<Model>();
         earth_node = std::make_shared<Model>();
         moon_node = std::make_shared<Model>();
@@ -134,12 +199,23 @@ namespace udit
         terrain_node->set_parent(&root);
     }
 
+    // ================= TEXTURAS =================
+    
+    //Carga las texturas del motor
     void Scene::load_textures()
     {
         texture_wood = std::make_shared<Texture2D>("../../shared/assets/wood.png");
     }
 
     // ================= UPDATE =================
+
+    /*
+    
+       Actualiza la lógica de la escena.
+    
+     * Se encarga de animaciones como rotación de la tierra y órbita de la luna.
+    
+    */
     void Scene::update()
     {
         angle += 0.01f;
@@ -156,6 +232,20 @@ namespace udit
     }
 
     // ================= RENDER =================
+
+    /*
+    
+       Renderiza toda la escena.
+     
+     * Flujo:
+     * - Limpia buffers
+     * - Renderiza skybox
+     * - Activa shader
+     * - Envía datos de cámara y luces
+     * - Renderiza nodos del grafo
+     * - Renderiza objetos adicionales (terreno, cubos)
+    
+    */
     void Scene::render()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -258,6 +348,11 @@ namespace udit
     void Scene::moveDown(float dt) { camera.moveDown(dt); }
     void Scene::rotateCamera(float dx, float dy) { camera.rotate(dx, dy); }
 
+
+    // ================= INPUT =================
+
+    //Gestiona entrada del ratón para cámara.
+
     void Scene::handleMouse(float dx, float dy, float dt)
     {
         camera.rotate(dx, dy);
@@ -298,6 +393,13 @@ namespace udit
     }
 
     // ================= SHADERS =================
+
+    /*
+    
+       Compila y enlaza shaders del motor.
+     * @return ID del programa de shaders.
+    
+    */
     GLuint Scene::compile_shaders()
     {
         GLuint vs = glCreateShader(GL_VERTEX_SHADER);

@@ -4,9 +4,27 @@
 #include <iostream>
 #include <unordered_map>
 
+/*
+
+   Implementación de la clase Texture2D.
+
+ * Este módulo gestiona la carga, almacenamiento y uso de texturas 2D.
+ * Incluye un sistema de caché global (texture bank) para evitar cargas duplicadas.
+ 
+*/
+
 namespace udit
 {
-    static std::unordered_map<std::string, Texture2D*> texture_bank;
+    static std::unordered_map<std::string, Texture2D*> texture_bank; //Evita cargar múltiples veces la misma textura desde disco.
+
+    // ================= CONSTRUCTOR =================
+
+    /*
+    
+        Carga una imagen desde disco y la convierte en textura OpenGL.
+        Si falla la carga, se genera una textura blanca por defecto.
+    
+    */
 
     Texture2D::Texture2D(const std::string& path)
     {
@@ -21,6 +39,8 @@ namespace udit
             &channels,
             SOIL_LOAD_AUTO
         );
+
+        // ================= FALLBACK =================
 
         if (!data)
         {
@@ -45,15 +65,17 @@ namespace udit
             return;
         }
 
+        // ================= CREACIÓN TEXTURA =================
+
         glGenTextures(1, &texture_id);
         glBindTexture(GL_TEXTURE_2D, texture_id);
 
-        // 🔥 evita glitches en algunos drivers
+        //evita glitches en algunos drivers
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
 
-        // 🔥 carga textura
+        //carga textura
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
@@ -66,14 +88,16 @@ namespace udit
             data
         );
 
-        // 🔥 parámetros correctos
+
+        // ================= PARÁMETROS =================
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // 🔥 mipmaps (importante para cubos)
+        //mipmaps (importante para cubos) para mejorar calidad y rendimiento
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -87,11 +111,18 @@ namespace udit
             << ", " << channels << " canales)\n";
     }
 
+    // ================= DESTRUCTOR =================
+    //Libera la textura de la GPU.
+
     Texture2D::~Texture2D()
     {
         if (texture_id != 0)
             glDeleteTextures(1, &texture_id);
     }
+
+
+    // ================= BIND =================
+    //Activa la textura en un slot de textura.
 
     void Texture2D::bind(unsigned int slot) const
     {
@@ -100,6 +131,10 @@ namespace udit
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, texture_id);
     }
+
+
+    // ================= TEXTURE BANK API =================
+    //Carga una textura y la guarda en el banco global.
 
     Texture2D* Texture2D::load(const std::string& name, const std::string& path)
     {
@@ -118,7 +153,7 @@ namespace udit
         return nullptr;
     }
 
-    Texture2D* Texture2D::get(const std::string& name)
+    Texture2D* Texture2D::get(const std::string& name)//Obtiene una textura del banco global.
     {
         auto it = texture_bank.find(name);
 
@@ -129,7 +164,7 @@ namespace udit
         return nullptr;
     }
 
-    void Texture2D::load_default_textures()
+    void Texture2D::load_default_textures()//Carga texturas por defecto del motor.
     {
         std::cout << "Cargando texturas...\n";
 

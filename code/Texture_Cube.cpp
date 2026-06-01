@@ -4,8 +4,29 @@
 #include <iostream>
 #include <vector>
 
+/*
+
+   Implementación de la clase Texture_Cube.
+ 
+ * Este archivo gestiona la carga y creación de texturas cubemap.
+ * Un cubemap está formado por 6 imágenes que representan las caras de un cubo,
+   y se utiliza normalmente para skyboxes o reflejos.
+
+*/
+
 namespace udit
 {
+
+    // ================= CONSTRUCTOR =================
+
+    /*
+         Carga las 6 imágenes del cubemap desde disco y las sube a la GPU.
+
+        * Cada cara se asigna a su correspondiente target OpenGL.
+ 
+        * @param texture_base_path Ruta base de las texturas del cubemap.
+        
+    */
 
     Texture_Cube::Texture_Cube(const std::string& texture_base_path)
         : texture_id(0), texture_is_loaded(false)
@@ -57,7 +78,7 @@ namespace udit
         glGenTextures(1, &texture_id);
         glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
 
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //Configuración de filtrado y wrapping
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -66,6 +87,13 @@ namespace udit
         // =========================
         // ORDEN DE CARAS (IMPORTANTE)
         // =========================
+
+        /*
+            Orden de asignación de las caras del cubemap.
+            Es crítico para evitar texturas invertidas.
+         
+        */
+        
         static const GLenum targets[6] =
         {
             GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
@@ -93,7 +121,7 @@ namespace udit
                 sides[i]
             );
 
-            SOIL_free_image_data(sides[i]);
+            SOIL_free_image_data(sides[i]); //Liberar memoria CPU después de subir a GPU
         }
 
         texture_is_loaded = true;
@@ -102,6 +130,14 @@ namespace udit
     // =========================
     // DESTRUCTOR
     // =========================
+
+    /*
+    
+        Destructor de la textura cubemap.
+ 
+        *Libera la textura de la GPU si fue correctamente cargada.
+
+    */
     Texture_Cube::~Texture_Cube()
     {
         if (texture_is_loaded)

@@ -5,6 +5,19 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+/*
+
+   Implementación de la clase Skybox.
+ 
+ * Este archivo gestiona el renderizado de un skybox mediante un cubemap.
+ * El skybox simula el entorno infinito alrededor de la escena 3D.
+
+*/
+
+// ================= GEOMETRÍA =================
+
+//Cubo de 36 vertices (6 caras x 2 triangulos x 3 vertices)
+
 // ================= CUBO (36 vértices) =================
 const GLfloat Skybox::coordinates[] =
 {
@@ -52,6 +65,22 @@ const GLfloat Skybox::coordinates[] =
 };
 
 // ================= SHADERS =================
+
+/*
+
+    Vertex shader del skybox.
+ 
+ * Proyecta el cubo del skybox sin desplazamiento de cámara.
+
+*/
+
+/*
+
+   Fragment shader del skybox.
+ 
+ * Muestra la textura del cubemap en cada dirección.
+*/
+
 const char* Skybox::vertex_shader_code =
 "#version 330 core\n"
 "layout(location=0) in vec3 aPos;\n"
@@ -74,6 +103,17 @@ const char* Skybox::fragment_shader_code =
 "}";
 
 // ================= CUBEMAP =================
+
+/*
+   Carga un cubemap desde disco.
+ 
+ * Cada cara del cubemap se carga como una textura independiente
+   y se asigna a su correspondiente target OpenGL.
+ 
+ * @param base_path Ruta base de las texturas.
+ * @return ID de textura cubemap.
+    
+*/
 GLuint Skybox::loadCubemap(const std::string& base_path)
 {
     GLuint texID;
@@ -148,6 +188,17 @@ GLuint Skybox::loadCubemap(const std::string& base_path)
 
 
 // ================= CONSTRUCTOR =================
+
+/*
+
+   Constructor del skybox.
+ 
+   Inicializa:
+ * - Cubemap
+ * - Shaders
+ * - VAO/VBO del cubo
+ 
+*/
 Skybox::Skybox(const std::string& path)
 {
     cubemap_texture = loadCubemap(path);
@@ -172,7 +223,7 @@ Skybox::Skybox(const std::string& path)
     glUseProgram(shader_id);
     glUniform1i(glGetUniformLocation(shader_id, "skybox"), 0);
 
-    glGenVertexArrays(1, &vao_id);
+    glGenVertexArrays(1, &vao_id); //Creacion de geometria del cubo
     glGenBuffers(1, &vbo_id);
 
     glBindVertexArray(vao_id);
@@ -186,6 +237,15 @@ Skybox::Skybox(const std::string& path)
 }
 
 // ================= RENDER =================
+
+/*
+
+   Renderiza el skybox.
+
+ * El skybox se renderiza sin profundidad relativa y sin desplazamiento de cámara.
+ * Esto crea la ilusión de un entorno infinito.
+
+*/
 void Skybox::render(const Camera& camera)
 {
     glDepthMask(GL_FALSE);
@@ -222,6 +282,18 @@ void Skybox::render(const Camera& camera)
 }
 
 // ================= DESTRUCTOR =================
+
+/*
+
+    Destructor del skybox.
+ 
+   Libera recursos GPU:
+ * - VAO
+ * - VBO
+ * - Textura cubemap
+ * - Programa de shaders
+   
+*/
 Skybox::~Skybox()
 {
     glDeleteVertexArrays(1, &vao_id);
