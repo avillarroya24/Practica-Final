@@ -92,4 +92,19 @@ namespace udit
             glUniform4fv(loc, 1, glm::value_ptr(color));
         }
     }
+
+    void Model::enable_texture(bool enable)
+    {
+        if (!material)
+            return;
+
+        GLint loc = material->get_shader_program()
+            ->get_uniform_location("use_texture");
+
+        if (loc != -1)
+        {
+            glUniform1i(loc, enable ? 1 : 0);
+        }
+    }
+
 }

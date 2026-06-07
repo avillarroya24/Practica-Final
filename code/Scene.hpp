@@ -56,6 +56,7 @@ namespace udit
         // ================= ESTADO =================
         float angle;
         float mixValue = 0.5f;
+        float moon_angle = 0.0f;
 
         // ================= HELPERS =================
         GLuint compile_shaders();

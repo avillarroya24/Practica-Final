@@ -15,6 +15,7 @@ namespace udit
         std::shared_ptr<Mesh> mesh;
         std::shared_ptr<Material> material;
 
+
         // Renderizado del grafo
         void render() override;
 

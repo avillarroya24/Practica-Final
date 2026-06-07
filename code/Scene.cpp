@@ -96,8 +96,9 @@ namespace udit
         "    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);\n"
         "    vec3 specular = 0.7 * spec * vec3(1.0);\n"
         "    vec3 result = pow(ambient_col + diffuse + specular, vec3(1.3));\n"
-        "    fragment_color = use_texture ? texture(diffuse_map, texcoord)\n"
-        "                                 : vec4(result, 1.0);\n"
+        "    float alpha = (uv_scale < 1.0) ? 0.3 : 1.0;\n"
+        "    fragment_color = use_texture ? vec4(texture(diffuse_map, texcoord).rgb, alpha)\n"
+        "                                 : vec4(result, alpha);\n"
         "}";
 
     // ================= CONSTANTES =================
@@ -222,80 +223,108 @@ namespace udit
 
         earth_node->transform.rotation.y = angle * 0.5f;
 
+        // ================= LUNA REALISTA =================
+        // 1 vuelta completa ≈ 27.3 días → simulado lento
+        float moon_speed = 0.0012f; // muy lento estilo real
+
+        moon_angle += moon_speed;
+
         moon_node->transform.position = {
-            cos(angle * 2.0f) * 4.0f,
+            cos(moon_angle) * 4.0f,
             0.0f,
-            sin(angle * 2.0f) * 4.0f
+            sin(moon_angle) * 4.0f
         };
 
-        moon_node->transform.rotation.x = angle * 3.0f;
+        moon_node->transform.rotation.x = moon_angle * 2.0f;
     }
 
-    // ================= RENDER =================
-
-    /*
-    
-       Renderiza toda la escena.
-     
-     * Flujo:
-     * - Limpia buffers
-     * - Renderiza skybox
-     * - Activa shader
-     * - Envía datos de cámara y luces
-     * - Renderiza nodos del grafo
-     * - Renderiza objetos adicionales (terreno, cubos)
-    
-    */
     void Scene::render()
     {
+        // ================= LIMPIEZA DE PANTALLA =================
+        // Borra color y profundidad antes de renderizar el nuevo frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // ================= SKYBOX =================
+        // Renderiza el fondo (cielo)
         skybox->render(camera);
+
+        // Activar shader principal
         glUseProgram(program_id);
 
+        // Obtener matriz de vista de la cámara
         glm::mat4 view = camera.get_view_matrix();
 
+        // ================= LUZ Y CÁMARA =================
+        // Posición de la luz en la escena
         glUniform3f(glGetUniformLocation(program_id, "light_pos"), 10.f, 10.f, 10.f);
+
+        // Posición de la cámara (para iluminación especular)
         glUniform3f(glGetUniformLocation(program_id, "view_pos"),
             camera.getX(), camera.getY(), camera.getZ());
 
+        // ================= GRAFO DE ESCENA =================
+        // Recorre el grafo (jerarquía de nodos)
         root.traverse(0.016f);
 
+        // Uniform para activar/desactivar texturas
         int useTexLoc = glGetUniformLocation(program_id, "use_texture");
 
+        // =====================================================
+        // TERRENO
+        // =====================================================
+
+        // Obtener textura del terreno
         auto terrainTex = Texture2D::get("terrain");
 
         if (terrainTex)
         {
+            // Activar textura
             terrainTex->bind(0);
             glUniform1i(useTexLoc, 1);
+
+            // Escalar UVs (repetición de textura)
             glUniform1f(glGetUniformLocation(program_id, "uv_scale"), 8.0f);
         }
-        else glUniform1i(useTexLoc, 0);
+        else
+        {
+            glUniform1i(useTexLoc, 0);
+        }
 
+        // Matriz de transformación del terreno (posición en el mundo)
         glm::mat4 terrain_model = glm::translate(glm::mat4(1.0f), TERRAIN_OFFSET);
+
+        // Enviar matriz al shader (vista * modelo)
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * terrain_model));
 
+        // Dibujar el terreno
         terrain.Draw();
 
+
+        // =====================================================
+        // CUBO GRANDE (TIERRA)
+        // =====================================================
+
+        // Obtener textura del cubo grande (tierra)
         auto earthTex = Texture2D::get("earth");
 
         if (earthTex)
         {
+            // Asignar textura al cubo
             cube.set_texture(earthTex->get_id());
             cube.enable_texture(true);
 
+            // Activar textura en OpenGL
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, earthTex->get_id());
-            glUniform1i(useTexLoc, 1);
-        }
-        else
-        {
-            cube.enable_texture(false);
+
             glUniform1i(useTexLoc, 0);
         }
 
+        // Transformación del cubo grande:
+        // - Posición en escena
+        // - Rotación (simula giro de la Tierra)
+        // - Escala
         glm::mat4 main_cube_model = make_model(
             glm::mat4(1.0f),
             MAIN_CUBE_POS,
@@ -304,39 +333,62 @@ namespace udit
             glm::vec3(MAIN_CUBE_SCALE)
         );
 
+        // Enviar matriz al shader
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * main_cube_model));
 
+        // Dibujar cubo grande
         cube.render();
 
+
+        // =====================================================
+        // CUBO PEQUEÑO
+        // =====================================================
+
+        // Activar blending para transparencia
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Desactivar escritura en profundidad (para transparencia correcta)
         glDepthMask(GL_FALSE);
 
-        texture_wood->bind();
-        glUniform1i(useTexLoc, 1);
-
+        // Transformación del cubo pequeño:
+        // - Parte desde base
+        // - Rota alrededor del cubo grande (órbita)
+        // - Se desplaza
+        // - Rota sobre sí mismo
+        // - Escala pequeña
         glm::mat4 small_cube_model = glm::translate(glm::mat4(1.0f), SMALL_CUBE_BASE_POS);
-        small_cube_model = glm::rotate(small_cube_model, angle * 2.f, { 0,1,0 });
+        small_cube_model = glm::rotate(small_cube_model, angle * 1.f, { 0,1,0 });
         small_cube_model = glm::translate(small_cube_model, SMALL_CUBE_OFFSET);
-        small_cube_model = glm::rotate(small_cube_model, angle * 3.f, { 1,1,0 });
+        small_cube_model = glm::rotate(small_cube_model, angle * 2.f, { 1,1,0 });
         small_cube_model = glm::scale(small_cube_model, glm::vec3(SMALL_CUBE_SCALE));
 
+        // Enviar matriz al shader
         glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE,
             glm::value_ptr(view * small_cube_model));
 
-        cube.enable_texture(false);
 
+        // Color dinámico + transparencia (alpha)
         cube.set_color(glm::vec4(
-            0.5f + 0.5f * cos(angle * 1.5f),
-            0.5f + 0.5f * sin(angle * 0.7f),
-            0.5f + 0.5f * cos(angle * 2.0f),
-            0.25f
+            0.5f + 0.5f * cos(angle * 0.4f),
+            0.5f + 0.5f * sin(angle * 0.25f),
+            0.5f + 0.5f * cos(angle * 0.3f),
+            0.04f
         ));
 
+        // Dibujar cubo pequeño
         cube.render();
 
+        // Restaurar estado normal de profundidad
         glDepthMask(GL_TRUE);
+
+        // Desactivar blending
         glDisable(GL_BLEND);
+
+
+        // ================= GRAFO FINAL =================
+        // Segunda pasada del grafo (según tu estructura actual)
+        root.traverse(0.0f);
     }
 
     // ================= CONTROLS =================
