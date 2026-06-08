@@ -164,14 +164,25 @@ namespace udit
         return nullptr;
     }
 
-    void Texture2D::load_default_textures()//Carga texturas por defecto del motor.
+    void Texture2D::load_default_textures() // Carga texturas por defecto del motor
     {
         std::cout << "Cargando texturas...\n";
 
-        load("circulo", "textures/circulo-oscuro.png");
-        load("earth", "textures/earth_daymap.png");
-        load("luna", "textures/luna.png");
-        load("terrain", "textures/terrain.png");
+        // =====================================================
+        // TEXTURAS DE LA ESCENA
+        // =====================================================
+
+        // Terreno (suelo)
+        load("terrain", "../../shared/assets/terrain.png");
+
+        // Cubo grande (TIERRA)
+        load("earth", "../../shared/assets/Imagen.png");
+
+        // Cubo pequeño (LUNA / ORBITAL)
+        load("luna", "../../shared/assets/uv-checker.png");
+
+        // Extra (si lo usas en UI u objetos secundarios)
+        load("circulo", "../../shared/assets/circulo-oscuro.png");
 
         std::cout << "Texturas cargadas.\n";
     }
