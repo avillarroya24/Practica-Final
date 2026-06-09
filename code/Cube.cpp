@@ -3,9 +3,9 @@
 
 /*
     Implementación de la clase Cube.
- * Este archivo define la geometría de un cubo y su comportamiento
- * en renderizado usando OpenGL. Incluye la gestión de buffers,
- * colores dinámicos y texturas sin distorsión.
+ * Este archivo define la geometría de un cubo y su comportamiento en renderizado usando OpenGL. 
+ * Incluye la gestión de buffers, colores dinámicos y texturas sin distorsión.
+ 
 */
 
 namespace udit

@@ -20,7 +20,7 @@
  * - Añade el nodo actual a la lista de hijos del padre si no está ya
  * - Actualiza la jerarquía de transformaciones
  
- * @param node Nodo padre al que se va a asociar este nodo.
+ * node Nodo padre al que se va a asociar este nodo.
 
 */
 void Node::set_parent(Node* node)
@@ -50,7 +50,7 @@ void Node::set_parent(Node* node)
  * Ejecuta la actualización y render del nodo actual y después
    recorre recursivamente todos sus hijos.
  
- * @param deltaTime Tiempo entre frames para actualizar lógica.
+ * deltaTime Tiempo entre frames para actualizar lógica.
 
 */
 void Node::traverse(float deltaTime)
@@ -74,7 +74,7 @@ void Node::traverse(float deltaTime)
  
  * El hijo se vincula automáticamente como descendiente del nodo actual.
  
- * @param child Nodo hijo a añadir.
+ * child Nodo hijo a añadir.
 
 */
 

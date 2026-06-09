@@ -19,8 +19,8 @@ namespace udit
     // =========================================================================
 
     /**
-     * @brief Vertex Shader principal del motor gráfico.
-     * * Procesa la geometría multiplicando las posiciones por las matrices de transformación,
+     * Vertex Shader principal del motor gráfico.
+     * Procesa la geometría multiplicando las posiciones por las matrices de transformación,
      * calcula las normales en el espacio de la cámara y traslada las coordenadas UV escaladas.
      */
     const std::string Scene::vertex_shader_code =
@@ -46,8 +46,8 @@ namespace udit
         "}";
 
     /**
-     * @brief Fragment Shader principal del motor gráfico.
-     * * Modificado para permitir el tintado verde del terreno sobre su textura difusa.
+     * Fragment Shader principal del motor gráfico.
+     * Modificado para permitir el tintado verde del terreno sobre su textura difusa.
      */
     const std::string Scene::fragment_shader_code =
         "#version 330 core\n"

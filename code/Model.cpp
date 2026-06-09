@@ -58,7 +58,7 @@ namespace udit
      
      * La textura se delega al material asociado.
      
-     * @param tex Textura 2D que se aplicará al modelo.
+     * tex Textura 2D que se aplicará al modelo.
     */
 
     void Model::set_texture(std::shared_ptr<Texture2D> tex)
@@ -75,7 +75,7 @@ namespace udit
      
      * Envía un color uniforme al shader si el material está disponible.
      
-     * @param color Color RGBA del modelo.
+     * color Color RGBA del modelo.
     
     */
 

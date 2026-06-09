@@ -43,7 +43,7 @@ Shader_Program::Shader_Program(
 
    Comprueba si el shader se compiló correctamente.
 
- * @return true si el programa es válido, false en caso contrario.
+ * true si el programa es válido, false en caso contrario.
 
 */
 
@@ -72,8 +72,8 @@ void Shader_Program::use()
 
     Obtiene la localización de una variable uniform.
  
- * @param name Nombre del uniform en el shader.
- * @return Identificador de la ubicación del uniform.
+ * name Nombre del uniform en el shader.
+ * Identificador de la ubicación del uniform.
 
 */
 

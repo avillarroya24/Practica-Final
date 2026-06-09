@@ -25,7 +25,7 @@
  * Si el objeto tiene un padre, combina su transformación con la del padre
  * para soportar jerarquías (scene graph).
  
- * @return Matriz 4x4 de transformación en espacio mundo.
+ * Matriz 4x4 de transformación en espacio mundo.
 
 */
 
