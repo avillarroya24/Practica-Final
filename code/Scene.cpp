@@ -159,8 +159,8 @@ namespace udit
     void Scene::load_textures()
     {
         Texture2D::load("terrain", "../../shared/assets/Imagen.png");
-        Texture2D::load("earth", "../../shared/assets/wood.png");
-        Texture2D::load("luna", "../../shared/assets/uv-checker.png");
+        Texture2D::load("earth", "../../shared/assets/crystal_texture.png");
+        Texture2D::load("luna", "../../shared/assets/crystal-texture.png");
     }
 
     // =========================================================================

@@ -29,8 +29,7 @@ Camera::Camera()
 // PROJECTION
 // =======================
 
-/*Calcula la matriz de proyección en perspectiva en función del
-* campo de visión, ratio de aspecto y planos de recorte.
+/*Calcula la matriz de proyección en perspectiva en función del campo de visión, ratio de aspecto y planos de recorte.
 */
 void Camera::updateProjection()
 {
@@ -49,9 +48,9 @@ void Camera::updateProjection()
 /* 
     Calcula la dirección hacia donde mira la cámara.
  * 
- * @param x Componente X de la dirección.
- * @param y Componente Y de la dirección.
- * @param z Componente Z de la dirección.
+ * x Componente X de la dirección.
+ * y Componente Y de la dirección.
+ * z Componente Z de la dirección.
 
 */
 
@@ -68,7 +67,7 @@ void Camera::getDirection(float& x, float& y, float& z) const
 
 /*
     Mueve la cámara en diferentes direcciones (arriba, abajo, hacia adelante, hacia detras...)
- * @param dt Tiempo delta (tiempo entre frames).
+ *  dt Tiempo delta (tiempo entre frames).
 */
 void Camera::moveForward(float dt)
 {
@@ -116,8 +115,8 @@ void Camera::moveDown(float dt) { position.y -= speed * dt; }
 /*
     Rota la cámara según el movimiento del ratón.
  * 
- * @param dx Movimiento en el eje X.
- * @param dy Movimiento en el eje Y.
+ * dx Movimiento en el eje X.
+ * dy Movimiento en el eje Y.
 
 */
 void Camera::rotate(float dx, float dy)
@@ -140,7 +139,7 @@ void Camera::rotate(float dx, float dy)
 /*
     Obtiene la matriz de vista.
 
- * @return Matriz de vista calculada con glm::lookAt.
+ * Matriz de vista calculada con glm::lookAt.
 
 */
 glm::mat4 Camera::get_view_matrix() const
@@ -164,7 +163,7 @@ glm::mat4 Camera::get_view_matrix() const
 /*
     Devuelve la matriz de proyección.
 
- * @return Referencia constante a la matriz de proyección.
+ * Referencia constante a la matriz de proyección.
 
 */
 const glm::mat4& Camera::get_projection_matrix() const
