@@ -1,0 +1,227 @@
+
+struct Transform
+{
+    Transform * parent = nullptr;
+
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+
+    glm::mat4 get_transform_matrix () const
+    {
+        glm::mat4 transform_matrix(1);
+
+        transform_matrix = tranlate (...);
+        transform_matrix = rotate (...);
+        transform_matrix = scale (...);
+
+        if (parent) return parent->get_transform_matrix () * transform_matrix;
+
+        return transform_matrix;
+    }
+};
+
+class Node                      // equivalente a GameObject, Actor, Entity
+{
+public:
+
+    Transform transform;
+
+    void set_parent (Node & node)
+    {
+        transform.parent = &node;
+    }
+};
+
+// todavía no
+class Camera : public Node
+{
+};
+
+// todavía no
+class Light : public Node
+{
+};
+
+class Model : public Node
+{
+    shared_ptr<Mesh> mesh;
+    shared_ptr<Material> material;
+
+public:
+
+    void render(GLint model_view_matrix_id)
+    {
+        glm::mat4 transform_matrix = transform.get_transform_matrix();
+
+        material->use ();
+
+        glUniformMatrix4fv(model_view_matrix_id, 1, GL_FALSE, glm::value_ptr(transform_matrix));
+
+        mesh->render ();
+    }
+
+};
+
+class Material
+{
+    shared_ptr< Shader_Program > shader_program;
+    shared_ptr< Texture > texture;                  //<<< todavía no
+
+public:
+
+    void use ()
+    {
+        shader_program->use ();
+        //texture->use ();                          //<<< todavía no
+    }
+};
+
+class Mesh
+{
+protected:
+
+    enum
+    {
+        COORDINATES_VBO,
+        COLORS_VBO,
+        INDICES_EBO,
+        VBO_COUNT
+    };
+
+    GLuint vbo_ids[VBO_COUNT];      // Ids de los VBOs que se usan
+    GLuint vao_id = 0;                  // Id del VAO del cubo
+
+public:
+
+    ~Mesh()
+    {
+        if (vao_id)
+        {
+            glDeleteVertexArrays (1, &vao_id);
+            glDeleteBuffers (VBO_COUNT, vbo_ids);
+        }
+    }
+
+    void render ()
+    {
+        glBindVertexArray (vao_id);
+        glDrawElements (GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
+        glBindVertexArray (0);
+    }
+
+};
+
+class Cube : public Mesh
+{
+    static const GLfloat coordinates[];
+    static const GLfloat colors     [];
+    static const GLubyte indices    [];
+
+public:
+
+    Cube();
+
+};
+
+// todavía no
+class Sphere : public Mesh
+{
+};
+
+// todavía no
+class Terrain : public Mesh     // equivalente a malla de elevación
+{
+};
+
+// opcional
+class File_Mesh : public Mesh
+{
+};
+
+class Shader_Program
+{
+    GLint shader_program_id = -1;           // si el id es -1, hubo algún error
+
+public:
+
+    Shader_Program(const string & vertex_shader_code, const string & fragment_shader_code);
+
+    bool good () const
+    {
+        return shader_program_id != -1;
+    }
+
+    void use ();
+
+    GLint get_uniform_location (const char * uniform_name)
+    {
+        return glGetUniformLocation (program_id, uniform_name);
+    }
+
+private:
+
+    void compile_shaders ();
+};
+
+// todavía no
+class Texture
+{
+};
+
+// todavía no
+class Texture2D : public Texture
+{
+};
+
+// todavía no
+class Texture_Cube_Map : public Texture
+{
+};
+
+class Scene
+{
+    // todavía no
+    //map<string, shared_ptr<Node>> scene_graph;
+
+    shared_ptr<Cube> cube_mesh;
+    shared_ptr<Material> material;
+
+    Model cube1;
+    Model cube2;
+
+    GLint  model_view_matrix_id;
+    GLint  projection_matrix_id;
+    
+public:
+
+    Scene()
+    {
+        cube_mesh = make_shared<Cube>();
+
+        material = make_shared<Material>();
+        material->shader_program = make_shared<Shader_Program>("código del vertex shader", "código del fragment shader");
+
+        model_view_matrix_id = material->shader_program->get_uniform_location ("model_view_matrix");
+        projection_matrix_id = material->shader_program->get_uniform_location ("projection_matrix");
+
+        cube1.mesh = cube_mesh;
+        cube1.material = material;
+        cube1.transform.position = vec3(0, 0, -10);
+
+        cube2.mesh = cube_mesh;
+        cube2.material = material;
+        cube2.transform.position = vec3(1, 0, -10);
+
+        cube2.set_parent (cube1);
+    }
+
+    void render ()
+    {
+        glClear(...);
+
+        cube1.render(model_view_matrix_id);
+        cube2.render(model_view_matrix_id);
+    }
+
+};
