@@ -266,7 +266,7 @@ namespace udit
         // ---------------------------------------------------------------------
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_FALSE); // antes de renderizar el cubo transparente
 
         glm::mat4 small_cube_model = glm::translate(glm::mat4(1.0f), SMALL_CUBE_BASE_POS);
         small_cube_model = glm::rotate(small_cube_model, angle * 1.f, { 0, 1, 0 });
@@ -280,7 +280,7 @@ namespace udit
             0.5f + 0.5f * cos(angle * 0.4f),
             0.5f + 0.5f * sin(angle * 0.25f),
             0.5f + 0.5f * cos(angle * 0.3f),
-            1.0f
+            0.5f
         ));
 
         auto moonTex = Texture2D::get("luna");
@@ -299,6 +299,7 @@ namespace udit
         cube.render();
 
         glBindTexture(GL_TEXTURE_2D, 0);
+        glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
 
         root.traverse(0.0f);
